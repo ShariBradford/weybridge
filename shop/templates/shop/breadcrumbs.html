@@ -1,0 +1,17 @@
+<nav class="breadcrumbs" aria-label="breadcrumb">
+    <ol class="breadcrumb">
+    {% for breadcrumb in breadcrumbs %}
+        {% if breadcrumb != breadcrumbs|last %}
+        <li class="breadcrumb-item">
+            <a
+                href="{% if breadcrumb.type == 'home' %}{% url 'shop:index' %}{% elif breadcrumb.type == 'category' %}{% url 'shop:category_products' category_id=breadcrumb.id %}{% endif %}">
+                {{ breadcrumb.name|title }}
+            </a>
+        {% else %}
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ breadcrumb.name|title }}
+        {% endif %}
+        </li>
+    {% endfor %}
+    </ol>
+</nav>

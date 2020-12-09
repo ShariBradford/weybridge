@@ -1,0 +1,35 @@
+.container.new-category {
+    width: 500px;
+    margin: 20px auto;
+    padding: 0;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+}
+
+.container.new-category .header {
+    padding: 15px;
+    background-color: #03989E;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18pt;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.container.new-category h1 {
+    padding-top: 10px;
+    margin-left: 10px;
+}
+.container.new-category .content {
+    padding: 15px;
+}
+
+.required, .error {
+    color:red;
+}
+
+#allPost div img {
+    width: 150px;
+    border: 1px solid lightgray;
+}

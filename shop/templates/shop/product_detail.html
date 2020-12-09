@@ -1,0 +1,191 @@
+{% extends 'shop/base.html' %}
+{% load static humanize %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'shop/css/product.css' %}">
+{% endblock css %}
+
+{% block greeting %}{% if user.is_authenticated %} {{ user.first_name }}{% else %}{% endif %}{% endblock greeting %}
+
+{% block favorites %}
+{% if user.is_authenticated %}
+<a href="{% url 'shop:favorite_products' %}" class="nav-link"><i class="fas fa-bookmark"></i>Favorites</a>
+{% else %}
+{% endif %}
+{% endblock favorites %}
+
+{% block profile %}
+{% if user.is_authenticated %}
+<a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+        class="fas fa-user-cog"></i>Profile</a>
+{% else %}
+<a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fas fa-user-cog"></i>Register</a>
+{% endif %}
+{% endblock profile %}
+
+{% block login %}
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i>Logout</a>
+{% else %}
+<a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i>Login</a>
+{% endif %}
+{% endblock login %}
+
+{% block content %}
+<div class="container" data-id="{{ product.id }}">
+    {% include 'shop/breadcrumbs.html' %}
+
+    <div class="row">
+
+        <div class="col-1 thumbnails d-flex flex-column justify-content-start align-items-start">
+            {% for photo in product.product_photos.all %}
+            <div class="thumbnail{% if photo.is_default %} selected{% endif %}">
+                <img src="{{ photo.picture.url }}" data-id="{{ photo.id }}" alt="{{ product.name }} image">
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="col-6 main-image">
+            <img src="{{ product.get_default_photo_url }}" alt="{{ product.name }} image">
+        </div>
+
+        <div class="col-5 detail-info  mt-0 mb-2">
+            <div class="title d-flex flex-column justify-content-start">
+                <h1 class="my-0">{{ product.name }}</h1>
+                {% if request.user.is_staff %}
+                <div class="actions d-flex justify-content-center align-items-center">
+                    <p class="edit-category ml-2 my-0" title="Edit" style="color:#009EC3">
+                        <a href="{% url 'shop:product_update' pk=product.id %}">
+                            <small><i class="fas fa-pen"></i> Edit</small>
+                        </a>
+                    </p>
+        
+                    <p class="delete-category ml-2 my-0" title="Delete" style="color:red">
+                        <a href="{% url 'shop:product_delete' pk=product.id %}">
+                            <small><i class="fas fa-times" style="color:red"></i> Delete</small>
+                        </a>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div id="buy-box">
+                <h3>
+                    {% if product.is_on_sale %}
+                        ${{ product.get_sale_price|floatformat:2|intcomma }}
+                        <span class="indicator-sale"> SALE!</span>
+                    {% else %}
+                        ${{ product.price|floatformat:2|intcomma }}
+                    {% endif %}
+                </h3>
+                {% if product.inventory_stock %}
+                    <form method="POST" action="{% url 'cart:add_to_cart' product_id=product.id %}">
+                        {% csrf_token %}
+                        <input type="number" name="qty" min="1" max="{{ product.inventory_stock }}" value="1">
+                        <button type="submit" class="btn btn-info">Add to Cart</button>
+                    </form>
+                {% else %}
+                    <span style="color:red;">SOLD OUT</span>
+                {% endif %}    
+            </div><!-- end #buy-box -->
+
+            <div id="categories">
+                <!--Insert link tag to be able to take to similar category pages-->
+                <p>About this item:</p>
+                <p class="categories">Categories: {{ categories }}</p>
+                <p>SKU: {{ product.sku }}</p>
+                <p>Quantity in Stock: {% if product.inventory_stock %}{{ product.inventory_stock }}{% else %}<span style="color:red;">SOLD OUT</span>{% endif %}</p>
+            </div><!-- end #categories -->
+
+            <div class="description">Description: 
+                <div>{{ product.description|linebreaks }}</div>
+            </div><!-- end .description -->
+        </div>
+    </div>   
+
+    <div class="row">
+        {% if request.user.is_staff %}
+        <p style="font-style: italic;"><small>Created by {{ product.created_by.first_name }} {{ product.created_by.last_name }} on {{ product.created_at }} Updated by {{ product.updated_by.first_name }} {{ product.updated_by.last_name }} on {{ product.updated_at }}</small></p>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="ratings-info col-8">
+            <div class="d-inline-flex justify-content-start align-items-center">
+                <h4 class="my-0">Average Rating: <span class="rating-number" data-rating="{{average_rating|stringformat:'.2F'}}" data-rating-size="medium"></span></h4>
+                <div class="btn btn-info ml-3 newDish"><small><i class="fas fa-plus-circle"></i> New Rating</small></div>
+            </div>
+
+            <div id="newRating" style="display: none;">
+                {% if user_has_rated_item %}
+                    <p>You've already rated this item: <span class="rating-number" data-rating="{{ user_rating_this_item.number_of_stars }}" data-rating-size="medium"></span></p>
+                {% else %}
+                    {% include 'shop/ratingForm.html' %}
+                {% endif %}
+            </div><!-- end #newRating -->
+
+            <div class="ratings">
+                {% for rating in all_ratings %}
+                <div class="rating" id="rating-{{rating.id}}">
+                    {% include 'shop/stars.html' with size="small" %}
+                    <h6>
+                        <a href="{% url 'accounts:user_profile' profiled_user_id=rating.user.id %}">
+                            {{ rating.user.first_name }} {{ rating.user.last_name }}
+                        </a>
+                    </h6>
+                    <p>{{ rating.review }}</p>
+                    <p>{{ rating.created_at }}</p>
+                    <div class="rating-votes">
+                        <a href="/rating/{{ rating.id }}/vote/1">
+                            <i class="far fa-thumbs-up"></i>
+                        </a> 
+                        {{ rating.upvotes}} 
+
+                        <a href="/rating/{{ rating.id }}/vote/-1"><!-- url 'shop:rating_vote' rating_id=rating.id score=-1 -->
+                            <i class="far fa-thumbs-down"></i>
+                        </a> 
+                        {{ rating.downvotes}}                         
+                    </div>
+                </div><!-- end .rating -->
+                {% endfor %}
+            </div><!-- end .ratings -->
+        </div><!-- end .ratings-info -->
+
+        <div class="comments col-4">
+            <div class="d-inline-flex justify-content-start align-items-center">
+                <h4>Questions</h4>
+                <div class="btn btn-info ml-3 newComment"><small><i class="fas fa-plus-circle"></i> New Question</small></div>
+            </div>
+            <div id="newComment" style="display: none;">
+                {% include 'shop/commentForm.html' with form=question_form %}
+            </div><!-- end #newRating -->
+
+
+            <div id="usersComments">
+
+                {% for question in product.questions.all %}
+                    <p><span style="font-weight: bold;">Question </span>by 
+                        <a href="{% url 'accounts:user_profile' profiled_user_id=question.asker.id %}">
+                            {{ question.asker.get_full_name }}
+                        </a>:
+                    </p>
+                    <p>{{ question.content }}</p>
+                    <p>{{ question.created_at }}</p>
+
+                    {% for answer in question.answers.all %}
+                    <p><span style="font-weight: bold;">Answer </span>by 
+                        <a href="{% url 'accounts:user_profile' profiled_user_id=answer.answerer.id %}">
+                        {{ answer.answerer.get_full_name }}
+                        </a>: 
+                    </p>
+                    <p>{{ answer.content }}</p>
+                    {% endfor %}
+                {% endfor %}
+
+            </div><!-- end #usersComments -->
+        </div><!-- end .Comments -->
+
+    </div> <!-- end row comments & ratings -->
+</div>
+
+{% endblock %}

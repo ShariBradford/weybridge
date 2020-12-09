@@ -1,0 +1,15 @@
+{% for image in images %}
+<span class="existing-image">
+    <img src="{{ image.picture.url }}" data-id="{{ image.id }}" alt="Dish Picture Here">
+    <a class="action-button button-delete" data-href="{% url 'shop:product_photo_delete' product_photo_id=image.id %}" title="Delete image">
+        <i class="fas fa-trash-alt"></i>
+    </a>
+    {% if image.is_default %}
+    <a class="action-button button-make-default is-default" data-href="{% url 'shop:product_photo_make_primary' product_photo_id=image.id %}" title="Primary image">
+    {% else %}
+    <a class="action-button button-make-default" data-href="{% url 'shop:product_photo_make_primary' product_photo_id=image.id %}" title="Make primary image">
+    {% endif %}
+        <i class="fas fa-certificate"></i>
+    </a>
+</span>
+{% endfor %}

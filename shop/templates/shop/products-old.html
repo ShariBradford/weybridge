@@ -1,0 +1,33 @@
+<div class="row" id="newPost">
+    <div class="title">
+      <a href="/product/new" class="btn btn-info"><small><i class="fas fa-plus-circle"></i> Create New Recipe</small></a> 
+    </div>
+
+
+  </div>
+  <div id="allPost">
+    <!-- All Users Post [For Loop Starts] -->
+    {% for product in object_list %}
+    <div class="post">
+      <div id="dishTitle" class="row">
+        <h5><a href="/product/{{ product.id }}">{{ product.name }}</a></h5>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          <div id="picture">
+            <img src="{{ product.product_photos.first.picture.url }}" alt="Dish Picture Here">
+          </div>
+        </div>
+        <div id="description" class="col-8">
+          <p><span>Description:</span>  {{ product.description }}</p>
+          
+          <div>
+            <p><span data-rating="{{ product.get_average_rating }}"></span> <small>{{ product.ratings.count }} Ratings</small></p>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    <!-- End For Loop -->
+    {% endfor %}
+  </div>

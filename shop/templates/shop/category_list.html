@@ -1,0 +1,78 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+{% block css %}
+<link rel="stylesheet" href="{% static 'shop/css/categories.css' %}">
+{% endblock css %}
+
+{% block greeting %}
+{% if user.is_authenticated %} {{ user.first_name }}{% else %}{% endif %}
+{% endblock greeting %}
+
+{% block favorites %}
+{% if user.is_authenticated %}
+<a href="{% url 'shop:favorite_products' %}" class="nav-link"><i class="fas fa-bookmark"></i>Favorites</a>
+{% else %}
+{% endif %}
+{% endblock favorites %}
+
+{% block profile %}
+{% if user.is_authenticated %}
+<a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+    class="fas fa-user-cog"></i>Profile</a>
+{% else %}
+<a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fas fa-user-cog"></i>Register</a>
+{% endif %}
+{% endblock profile %}
+
+{% block categories %}
+{% endblock categories %}
+
+
+{% block login %}
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i>Logout</a>
+{% else %}
+<a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i>Login</a>
+{% endif %}
+{% endblock login %}
+
+{% block content %}
+
+
+<div class="container">
+  
+  <div class="header d-flex align-items-center">
+    <h3 class="mr-3">Select A Category</h3>
+    {% if request.user.is_staff %}
+    <a href="{%  url 'shop:category_add' %}" class="btn btn-info" role="button" style="font-weight:bold;">New</a>
+    {% endif %}
+    </div>
+
+  <div id="categories">
+
+    {% for category in object_list %}
+    <div class="category" id="{{ category.name }}" data-id="{{ category.id }}">
+      <a href="{% url 'shop:category_products' category_id=category.id %}">
+        <img src="{{ category.profile_pic.url }}" alt="Picture of category {{ category.name }}">
+        <h5>{{ category.name }}</h5>
+        {% if request.user.is_staff %}
+        <p class="edit-category" title="Edit" style="color:#009EC3">
+          <a href="{% url 'shop:category_update' pk=category.id %}">
+              <small><i class="fas fa-pen"></i> Edit</small>
+          </a>
+          <a href="{% url 'shop:category_delete' pk=category.id %}">
+            <small><i class="fas fa-times" style="color:red;"></i> Delete</small>
+          </a>
+          <a href="{% url 'shop:category_details' pk=category.id %}">
+            <small><i class="fas fa-info-circle"></i> Details</small>
+          </a>
+        </p>
+        {% endif %}
+      </a>
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+
+{% endblock %}

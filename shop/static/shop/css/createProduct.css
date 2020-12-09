@@ -1,0 +1,79 @@
+.container.new-dish {
+    width: 800px;
+    margin: 20px auto;
+    padding: 0;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+}
+
+.container.new-dish .header {
+    padding: 15px;
+    background-color: #03989E;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18pt;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.container.new-dish h1 {
+    padding-top: 10px;
+    margin-left: 10px;
+}
+.container.new-dish .content {
+    padding: 15px;
+}
+
+.required, .error {
+    color:red;
+}
+
+#allPost div img {
+    width: 150px;
+    border: 1px solid lightgray;
+}
+
+.existing-image {
+    position:relative;
+    width:100px;
+    height:150px;
+    display:inline-block;
+}
+
+.existing-image img {
+    max-height:100%;
+}
+
+.existing-image a {
+    display: none;
+    align-items:center;
+    justify-content: center;    
+    position:absolute;
+    width:20px;
+    height:20px;
+    border:1 px solid black;
+    border-radius:5px;
+    color:black;
+    background-color: white;
+    cursor: pointer;
+}
+
+.existing-image:hover a {
+    display: flex;
+}
+
+.existing-image a.button-delete {
+    top:10px;
+    right:10px;
+}
+
+.existing-image a.button-make-default {
+    top:10px;
+    right:35px;
+    color: gray;
+}
+
+.existing-image a.is-default {
+    color: #009EC3;
+}

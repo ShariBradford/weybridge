@@ -1,0 +1,18 @@
+<p>
+    <span style="font-weight: bold;">Question </span>
+    by 
+    <a href="{% url 'accounts:user_profile' profiled_user_id=question.asker.id %}">
+        {{ question.asker.first_name }} {{ question.asker.last_name }}
+    </a>:
+</p>
+<p>{{ question.content }}</p>
+<p>{{ question.created_at }}</p>
+
+{% if question.answer %}
+<p><span style="font-weight: bold;">Answer </span>by 
+    <a href="{% url 'accounts:user_profile' profiled_user_id=question.answerer.id %}">
+    {{ question.answerer.first_name }} {{ question.answerer.last_name }}
+    </a>: 
+</p>
+<p>{{ question.answer }}</p>
+{% endif %}

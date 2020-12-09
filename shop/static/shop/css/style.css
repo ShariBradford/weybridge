@@ -1,0 +1,387 @@
+@import url(fonts.css);
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    font-family: "Roboto","Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-serif;
+    color: #333;
+}
+
+/* .content {
+    display: flex;
+    justify-content: flex-start;
+} */
+
+.sidebar {
+    position: absolute;
+    top: 185px;
+    left: 20px;
+    /* margin: 85px 0 0 10px; */
+    padding: 10px;
+    max-width: 350px;
+    background-color: #e7e7ee;
+}
+
+/* .container {
+    width: 1600px !important;
+} */
+
+.row {
+    width: 100%;
+}
+
+.container.login,
+.container.signup {
+    width: 360px !important;
+    margin: 20px auto;
+    padding: 0;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+}
+
+.container.signup {
+    width: 500px !important;
+}
+
+.container.login .header,
+.container.signup .header {
+    padding: 15px;
+    background-color: #03989E;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18pt;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.container.login h1,
+.container.signup h1 {
+    padding-top: 10px;
+    margin-left: 10px;
+}
+.container.login .content,
+.container.signup .content {
+    padding: 15px;
+}
+
+.required, .error {
+    color:red;
+}
+
+.fa-star {
+    color: gold;
+}
+
+.stars-large {
+    font-size: 14pt;
+}
+
+.stars-medium {
+    font-size: 10pt;
+}
+
+.stars-small {
+    font-size: 8pt;
+}
+
+.card {
+    position: relative;
+    width: 275px;
+    height: 420px;
+}
+
+.card-body {
+    position: relative;
+    background-color: white;
+    padding: 10px;
+}
+
+.card-img-top {
+    max-height: 343px;
+}
+
+.card-title {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 400;
+    font-size: 12pt;
+    margin-bottom: 5px;
+    width: 100%
+}
+
+.card-title span {
+    text-align: inherit;
+}
+
+.card .favorite {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    /*cursor: pointer;*/
+}
+
+.card .favorite a {
+    background-color: #FFFFFF;
+    border-radius: 50%;
+    height: 2.125rem;
+    width: 2.125rem;
+    padding: 3px;
+}
+
+.card .favorite img {
+    width: 32px;
+}
+
+.card .recommended {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color:#009EC3;
+    font-weight:bold;
+    font-size:8pt;
+}
+
+.card .areas-of-interest img, 
+.course-details .areas-of-interest img,
+.user-profile .areas-of-interest img {
+    width: 24px;
+    height: 24px;
+}
+
+.card .edit-button {
+    position: absolute;
+    right: 10px;
+    bottom: 5px;
+    margin-bottom: 0;
+}
+
+.card.interest .card-footer {
+    display: flex;
+    justify-content: center;
+    padding: 12px 5px;
+    font-size: 8pt !important;
+}
+
+img.course-type {
+    width: 24px;
+}
+
+.blue {
+    color: #009ec3;
+}
+
+.course-header {
+    text-align:center;
+}
+
+.course-details .course-image {
+    flex: 3;
+}
+
+.course-details .course-image img {
+    width: 100%;
+}
+
+ul.actions {
+    margin: 0;
+    padding: 0;
+}
+
+ul.actions li {
+    display: inline-block;
+    text-decoration: none;
+}
+
+ul.actions li::after {
+    content: ' | ';
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+ul.actions li:last-child::after {
+    content: '';
+}
+
+ul.actions .fas {
+    margin-right: 5px;
+}
+
+.user-profile .profile-image img {
+    border: 1px solid #009ec3;
+}
+
+.required {
+    color:red;
+}
+
+.user-chip,
+.interest-chip {
+    text-decoration:none;
+    margin-bottom: 4px;
+}
+
+.user-chip:hover {
+    background-color: lightskyblue;
+}
+
+.interest-chip:hover {
+    background-color: lightgray;
+}
+
+.user-chip .user-photo,
+.interest-chip .interest-photo {
+    max-width:50px;
+    position: relative;
+}
+
+.user-chip img {
+    width:100%;
+    border:1px solid #009EC3;
+    border-radius:50%;
+}
+
+.interest-chip img {
+    width:100%;
+}
+
+.user-chip .chip-action,
+.interest-chip .chip-action {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    font-size: 10pt;
+}
+
+.user-profile .areas-of-interest .list-group {
+    width: 100%;
+}
+
+.chip-action-danger {
+    color: red;
+}
+
+.chip-action-success {
+    color: green;
+}
+
+ul#id_number_of_stars {
+    list-style-type: none;
+}
+
+ul#id_number_of_stars li:first-of-type {
+    display:none;
+}
+
+ul#id_number_of_stars li {
+    border: 1px solid #009EC3;
+    border-radius: 3px;
+    padding: 5px;
+    margin: 3px;
+}
+
+ul#id_number_of_stars li:hover {
+    background-color: #009ec3;
+}
+
+ul#id_number_of_stars li:hover label {
+    color: white;
+}
+
+ul#id_number_of_stars li input {
+    margin-right: 3px;
+}
+
+ul#id_number_of_stars li input:checked {
+    font-weight:bold;
+}
+
+.user-rating-this-course {
+    border: 1px solid #009EC3;
+    border-radius: 3px;
+    padding: 5px;
+    margin: 3px;
+    background-color: #009EC3;
+    color: white;
+    font-weight: bold;
+}
+
+.pagination {
+    margin-bottom: 0 !important;
+}
+
+.indicators {
+    position: absolute;
+    left: 0;
+    top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 15px;
+    font-size: 10pt;
+    padding: 0;
+}
+
+.indicators i {
+    margin-right: 2px;
+}
+
+.indicator-new {
+    color: #009EC3;
+}
+
+.indicator-new i {
+    color: #009EC3;
+}
+
+.indicator-sold-out {
+    width: 100px;
+    color: red;
+}
+
+.indicator-sold-out i {
+    color: red;
+}
+
+.indicator-sale {
+    color: #FF00FF;
+}
+
+.indicator-sale i {
+    color: #FF00FF;
+}
+
+.breadcrumb {
+    background-color: white;
+    font-size: 8pt;
+    color: gray;
+    padding-left: 0;
+}
+
+.category {
+    margin-left: 20px;
+    color: #525252;
+    text-decoration: none;
+}
+
+.thumbnail {
+    cursor: pointer;
+}
+
+.thumbnail.selected {
+    border: 2px solid #009EC3;
+}
+
+.thumbnail img {
+    width: 70px;
+}
+
+.main-image img {
+    width: 475px;
+}

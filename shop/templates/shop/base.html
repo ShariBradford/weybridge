@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    {% load static %}
+
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'shop/favicon/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'shop/favicon/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'shop/favicon/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'shop/favicon/site.webmanifest' %}">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'shop/css/style.css' %}">
+    {% block css %} {% endblock css %}
+
+    <title>{% block title %}Weybridge{% endblock title %} | Carefully curated for the discerning shopper.</title>
+</head>
+
+<body>
+
+    <div class="main">
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark ">
+            <a class="navbar-brand mb-2" href="{% url 'shop:index' %}" title="Michelin star recipes for the home chef">
+                <img src="{% static 'shop/logo_tagline.png' %}" width="200px" alt="Weybridge Shop Logo">
+            </a>
+            <span class="navbar-text">
+                Welcome{% block greeting %} {{ user.first_name }}{% endblock greeting %}!
+            </span>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse d-flex justify-content-end" id="navbarNav">
+                <form method="GET" action="" class="search-form form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="search" name="q" value="{{ request.GET.q }}"
+                        placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-info my-2 my-sm-0" type="submit">Search</button>
+                </form>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        {% block favorites %}
+                        <a href="{% url 'shop:favorite_products' %}" class="nav-link"><i
+                                class="fas fa-bookmark"></i>Favorites</a>
+                        {% endblock favorites %}
+                    </li>
+
+                    <li class="nav-item">
+                        {% block profile %}
+                        <a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+                                class="fas fa-user-cog"></i>Profile</a>
+                        {% endblock profile %}
+                    </li>
+                    <li class="nav-item">
+                        {% block cart %}
+                        <a href="{% url 'cart:cart_details' %}" class="nav-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="badge badge-pill badge-primary">{{ request.session.cart_item_count }}</span>
+                        </a>
+                        {% endblock cart %}
+                    </li>
+                    <li class="nav-item">
+                        {% block login %}
+                        <a href="{% url 'logout' %}" class="nav-link">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </a>
+                        {% endblock login %}
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+    <footer class="container py-5">
+        <div class="row">
+            <div class="col-12 col-md">
+                <a href="/" title="Michelin star recipes for the home chef">
+                    <img src="/static/shop/icon.png" width="200px" alt="Weybridge Shop Logo">
+                </a>
+                <small class="d-block mb-3 text-muted">&copy; 2017-2020</small>
+            </div>
+            <div class="col-6 col-md">
+                <h5>Support</h5>
+                <ul class="list-unstyled text-small">
+                    <li><a class="text-muted" href="#">Contact Us</a></li>
+                    <li><a class="text-muted" href="#">FAQs</a></li>
+                    <li><a class="text-muted" href="#">Size Guide</a></li>
+                    <li><a class="text-muted" href="#">Shipping & Returns</a></li>
+                    <li><a class="text-muted" href="#">Another one</a></li>
+                    <li><a class="text-muted" href="#">Last time</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-md">
+                <h5>Shop</h5>
+                <ul class="list-unstyled text-small">
+                    <li><a class="text-muted" href="#">Women's Clothing</a></li>
+                    <li><a class="text-muted" href="#">Men's Clothing</a></li>
+                    <li><a class="text-muted" href="#">Furniture</a></li>
+                    <li><a class="text-muted" href="#">Discounts</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-md">
+                <h5>Company</h5>
+                <ul class="list-unstyled text-small">
+                    <li><a class="text-muted" href="#">Our Story</a></li>
+                    <li><a class="text-muted" href="#">Careers</a></li>
+                    <li><a class="text-muted" href="#">Privacy & Cookie Policy</a></li>
+                    <li><a class="text-muted" href="#">Locations</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-md">
+                <h5>Contact</h5>
+                <ul class="list-unstyled text-small">
+                    <li>1-301-555-1212</li>
+                    <li>1-301-555-1213</li>
+                    <li><a class="text-muted" href="#">help@weybridge.com</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- slim version of jquery does not contain ajax <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/5eddd1b245.js" crossorigin="anonymous"></script>
+    <script src="{% static 'shop/main.js' %}"></script>
+</body>
+
+</html>

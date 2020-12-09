@@ -1,0 +1,68 @@
+Celery
+How to standardize image filenames (e.g. product_id_image_number) (don't use original filename)
+Image sizing (fix stretched)
+    - product list pages
+    - detail pages
+Product Slug
+    - add slug to model
+    - auto-generate slug
+    # I have this signal to get the username and assign to slug field 
+@receiver(post_save, sender=User)
+def post_save_user(sender, instance, **kwargs):
+    slug = slugify(instance.username)
+    User.objects.filter(pk=instance.pk).update(slug=slug)
+
+Limit # product photos to 10
+- count how many exist and how many can be added
+- throw error if user tries to add more than can be added 
+
+Put product photos in a lightbox
+
+Display product Photo thumbnails as they are uploaded on new or update form
+
+product detail - click on a photo to enlarge
+    - lightbox: https://codesalad.dev/blog/pure-css-lightbox-25
+Camera Icon (for image uploads = <i class="fas fa-camera"></i>)
+
+Add login required, staff required, not_rated decorators to views
+
+Half stars
+    - <i class="fas fa-star-half"></i>
+
+Paginators
+
+Favorite button - back in white circle
+Favorite products and Category products
+- inherit from productlistview (so search is applied)
+
+Shopping cart app
+
+Buy button
+
+picture labels (e.g., "sale", "new:)
+
+SLUGS
+https://studygyaan.com/django/how-to-create-a-unique-slug-in-django
+
+Ratings - use preset css to show empty stars
+.rating[data-value="3"] .rating-item:nth-child(n+4) {
+    color: #ccc;
+}
+
+<div class="rating font-size-sm text-dark" data-value="3">
+    <div class="rating-item">
+        <i class="fas fa-star"></i>
+    </div>
+    <div class="rating-item">
+        <i class="fas fa-star"></i>
+    </div>
+    <div class="rating-item">
+        <i class="fas fa-star"></i>
+    </div>
+    <div class="rating-item">
+        <i class="fas fa-star"></i>
+    </div>
+    <div class="rating-item">
+        <i class="fas fa-star"></i>
+    </div>
+</div>

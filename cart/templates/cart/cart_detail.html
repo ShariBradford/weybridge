@@ -1,0 +1,82 @@
+{% extends 'shop/base.html' %}
+{% load static humanize %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'shop/css/product.css' %}">
+{% endblock css %}
+
+{% block greeting %}{% if user.is_authenticated %} {{ user.first_name }}{% else %}{% endif %}{% endblock greeting %}
+
+{% block favorites %}
+{% if user.is_authenticated %}
+<a href="{% url 'shop:favorite_products' %}" class="nav-link"><i class="fas fa-bookmark"></i>Favorites</a>
+{% else %}
+{% endif %}
+{% endblock favorites %}
+
+{% block profile %}
+{% if user.is_authenticated %}
+<a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+        class="fas fa-user-cog"></i>Profile</a>
+{% else %}
+<a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fas fa-user-cog"></i>Register</a>
+{% endif %}
+{% endblock profile %}
+
+{% block login %}
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i>Logout</a>
+{% else %}
+<a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i>Login</a>
+{% endif %}
+{% endblock login %}
+
+{% block content %}
+<div class="container">
+    {% if empty %}
+    <h1>{{ empty_message }}</h1>
+    {% else %}
+    <table class="table">
+        <thead>
+            <th>Item</th>        
+            <th>Price</th>        
+            <th>Quantity</th>        
+            <th>Subtotal</th>        
+        </thead>
+        <tfoot>
+            <th></th>        
+            <th></th>        
+            <th style="text-align: right;font-weight: bold;">Total</th>        
+            <th>${{ cart.total|floatformat:2|intcomma }}</th>        
+        </tfoot>
+        <tbody>
+            {% for item in cart.items.all %}
+            <tr>
+                <td>
+                    <img src="{{ item.product.get_default_photo_url }}" alt="{{ item.product.name }}" style="width:30px;">
+                    <a href="{% url 'shop:product_details' pk=item.product.id %}">
+                        {{ item.product.name }}
+                    </a>
+                </td>
+                <td>{{ item.product.get_sale_price|floatformat:2|intcomma }}</td>
+                <td class="d-flex align-items-center">
+                    <form method="POST" action="{% url 'cart:update_cart' product_id=item.product.id %}" class="d-flex justify-content-between align-items-center">
+                        {% csrf_token %}
+                        <input type="number" name="qty" min="0" max="{{ item.product.inventory_stock }}" value="{{ item.quantity }}" style="max-width:4em;min-width:4em;padding-left:3px;">
+                        <button type="submit" class="btn btn-warning btn-sm">Update</button>
+                    </form>
+
+                    <form method="POST" action="{% url 'cart:update_cart' product_id=item.product.id %}" class="d-flex align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="qty" value=0>
+                        <button type="submit" class="btn btn-sm"><i class="fas fa-trash-alt"></i></a>
+                    </form>
+                </td>
+                <td>${{ item.line_total|floatformat:2|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

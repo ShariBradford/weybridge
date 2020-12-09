@@ -1,0 +1,74 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'shop/css/product.css' %}">
+<link rel="stylesheet" href="{% static 'shop/css/createProduct.css' %}">
+{% endblock css %}
+
+{% block content%} 
+<div class="container new-dish">
+    <div class="header">
+        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="Mich Dish logo">
+        <div>
+            <h1>{{ action|capfirst }} Weybridge</h1>
+        </div>
+    </div>
+    <div class="content">
+        <form action=""
+            enctype="multipart/form-data" 
+            method="POST" 
+            role="form" novalidate>
+            {% csrf_token %}
+                            
+            {% for field in form.visible_fields %}
+            <div class="fieldWrapper form-group"
+                data-id="{{ field.name }}" 
+                aria-required="{% if field.field.required %}true{% else %}false{% endif %}">
+
+                {% if field.name == 'images' %}
+                    {% if images %}
+                    <h3>Existing Images:</h3>
+                    <div class="dish-image existing-images">
+                        {% for image in images %}
+                            <span class="existing-image">
+                                <img src="{{ image.picture.url }}" data-id="{{ image.id }}" alt="Dish Picture Here">
+                                <a class="action-button button-delete" data-href="{% url 'shop:product_photo_delete' product_photo_id=image.id %}" title="Delete image">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                                {% if image.is_default %}
+                                <a class="action-button button-make-default is-default" data-href="{% url 'shop:product_photo_make_primary' product_photo_id=image.id %}" title="Primary image">
+                                {% else %}
+                                <a class="action-button button-make-default" data-href="{% url 'shop:product_photo_make_primary' product_photo_id=image.id %}" title="Make primary image">
+                                {% endif %}
+                                    <i class="fas fa-certificate"></i>
+                                </a>
+                            </span>
+                        {% endfor %}
+                    </div><!-- end .dish-image -->
+                    {% endif %}
+                {% endif %}
+
+                {% for error in field.errors %}
+                <p class="alert alert-danger"><strong>{{ error }}</strong></p>
+                {% endfor %}
+                            
+                {{ field.label_tag }}{% if field.field.required %}<span class="required">*</span>{% endif %}
+                {{ field }}
+                {% if field.help_text %}
+                <small id="help_for_{{ field.name }}" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% for field in form.hidden_fields %}
+                {{ field }}
+            {% endfor %}
+            <div class="d-flex justify-content-center align-items-center">
+                <a href="{% if request.META.HTTP_REFERER == request.build_absolute_uri %}/{% else %}{{ request.META.HTTP_REFERER }}{% endif %}" class="btn btn-outline-secondary mb-2 mx-2" role="button">Cancel</a>
+                <input type="submit" class="btn btn-primary mb-2" value="Submit" />
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 
