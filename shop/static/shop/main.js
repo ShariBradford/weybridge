@@ -125,7 +125,7 @@ $('.help-text').html(function(index,oldHtml){
 });
 
 $('.newComment').click(function(e){
-    $('#newComment').show()
+    $('#newComment').toggle()
 })
 
 $('.comment-form input[type="submit"]').on('click', function(e){

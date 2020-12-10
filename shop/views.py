@@ -73,7 +73,7 @@ def get_product_rating_for_user(user, object):
         # determine if this user has rated this item before
         elif object.ratings.filter(user=user).count() > 0:
             #user hsa rated item; don't permit another rating (just don't return a form object)
-            print(f"Ratings for {object}: {object.ratings.filter(user=user).count()}")
+            # print(f"Ratings for {object}: {object.ratings.filter(user=user).count()}")
             user_has_rated_item = True
             user_rating_this_item = object.ratings.filter(user=user).first()
             form = None
@@ -274,10 +274,11 @@ class ProductList(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['sidebar'] = get_category_list(None)
+        context['sort_by'] = self.request.GET.get('sort_by', 'mostPopular')
         return context
 
     def get_ordering(self):
-        query_sort = self.request.GET.get('sort_by', None)
+        query_sort = self.request.GET.get('sort_by', 'mostPopular')
         # print(f"Sort by: {query_sort}")
         if query_sort:
             print(f"Sort by {query_sort}")

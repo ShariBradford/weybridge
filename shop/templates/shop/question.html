@@ -1,18 +1,40 @@
-<p>
-    <span style="font-weight: bold;">Question </span>
-    by 
-    <a href="{% url 'accounts:user_profile' profiled_user_id=question.asker.id %}">
-        {{ question.asker.first_name }} {{ question.asker.last_name }}
-    </a>:
-</p>
-<p>{{ question.content }}</p>
-<p>{{ question.date_asked }}</p>
+{% load humanize static %}
+<div class="question my-4">
+    <div class="d-flex align-items-start my-2">
+        <img src="{{ question.asker.profile.profile_pic.url }}" style="width:40px;" alt="{{ question.asker.get_full_name }}">
+        
+        <div class="question-detail ml-3">
+            <small class="text-muted my-0">
+                <a href="{% url 'accounts:user_profile' profiled_user_id=question.asker.id %}" style="line-height:0">
+                    {{ question.asker.get_full_name }}
+                </a>  &bull;  
+                <span style="line-height:0">{{ question.date_asked|naturalday }}</span>
+            </small>
+            <p class="my-0">{{ question.content }}</p>
+            <small class="question-actions text-muted my-0">
+                <span>{% if question.answers.count %}{{ question.answers.count }} Answer{{ question.answers.count|pluralize }}{% else %}Unanswered{% endif %}</span>
+                <span>  &bull;  </span>
+                <a href="">Follow</a>
+            </small>
+        </div><!-- end .question-detail -->
+    </div>
 
-{% for answer in question.answers %}
-<p><span style="font-weight: bold;">Answer </span>by 
-    <a href="{% url 'accounts:user_profile' profiled_user_id=question.answerer.id %}">
-    {{ answer.answerer.first_name }} {{ answer.answerer.last_name }}
-    </a>: 
-</p>
-<p>{{ answer }}</p>
-{% endif %}
+    <div class="answers" style="margin-left:50px;">
+        {% for answer in question.answers.all %}
+        <div class="answer d-flex align-items-start my-2">
+            <img src="{{ answer.answerer.profile.profile_pic.url }}" style="width:40px;" alt="{{ answer.answerer.get_full_name }}">
+            
+            <div class="answer-detail ml-3">
+                <small class="text-muted my-0">
+                    <a href="{% url 'accounts:user_profile' profiled_user_id=answer.answerer.id %}" style="line-height:0">
+                        {{ answer.answerer.get_full_name }}
+                    </a>  &bull;  
+                    <span style="line-height:0">answered {{ answer.date_answered|naturalday }}</span>
+                </small>
+                <p class="my-0">{{ answer.content }}</p>
+            </div><!-- end .answer-detail -->
+        </div><!-- end .answer -->
+        {% endfor %}
+    </div><!-- end .answers -->
+
+</div><!-- end .question -->

@@ -11,12 +11,12 @@
               Sort by
             </button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item" href="?sort_by=mostPopular">Most Popular</a>
-              <a class="dropdown-item" href="?sort_by=priceLowToHigh">Price (Low to High)</a>
-              <a class="dropdown-item" href="?sort_by=priceHighToLow">Price (High to Low)</a>
-              <a class="dropdown-item" href="?sort_by=aToZ">A to Z</a>
-              <a class="dropdown-item" href="?sort_by=zToA">Z to A</a>
-              <a class="dropdown-item" href="?sort_by=new">New</a>
+              <a class="dropdown-item{% if sort_by == 'mostPopular' %} active{% endif %}" href="?sort_by=mostPopular">Most Popular</a>
+              <a class="dropdown-item{% if sort_by == 'priceLowToHigh' %} active{% endif %}" href="?sort_by=priceLowToHigh">Price (Low to High)</a>
+              <a class="dropdown-item{% if sort_by == 'priceHighToLow' %} active{% endif %}" href="?sort_by=priceHighToLow">Price (High to Low)</a>
+              <a class="dropdown-item{% if sort_by == 'aToZ' %} active{% endif %}" href="?sort_by=aToZ">A to Z</a>
+              <a class="dropdown-item{% if sort_by == 'zToA' %} active{% endif %}" href="?sort_by=zToA">Z to A</a>
+              <a class="dropdown-item{% if sort_by == 'new' %} active{% endif %}" href="?sort_by=new">New</a>
             </div>
         </div>        
     </div>

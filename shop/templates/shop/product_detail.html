@@ -162,27 +162,10 @@
             </div><!-- end #newRating -->
 
 
-            <div id="usersComments">
-
-                {% for question in product.questions.all %}
-                    <p><span style="font-weight: bold;">Question </span>by 
-                        <a href="{% url 'accounts:user_profile' profiled_user_id=question.asker.id %}">
-                            {{ question.asker.get_full_name }}
-                        </a>:
-                    </p>
-                    <p>{{ question.content }}</p>
-                    <p>{{ question.created_at }}</p>
-
-                    {% for answer in question.answers.all %}
-                    <p><span style="font-weight: bold;">Answer </span>by 
-                        <a href="{% url 'accounts:user_profile' profiled_user_id=answer.answerer.id %}">
-                        {{ answer.answerer.get_full_name }}
-                        </a>: 
-                    </p>
-                    <p>{{ answer.content }}</p>
-                    {% endfor %}
-                {% endfor %}
-
+            <div id="usersComments" class="my-4">
+            {% for question in product.questions.all %}                
+                {% include 'shop/question.html' %}
+            {% endfor %}
             </div><!-- end #usersComments -->
         </div><!-- end .Comments -->
 
