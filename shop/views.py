@@ -11,6 +11,9 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from .models import *
 
+category_qs = Category.objects.all()
+throw_away_var = len(category_qs)   #force evaluation of queryset
+
 def get_category_parent(category_id):
     '''
         Returns an ordered list of category ids for all category 'ancestors'.
@@ -41,7 +44,8 @@ def get_category_children(category_id):
 
 def get_category_list(parent_category_id):
     strHTML = ''
-    children = Category.objects.filter(parent_category = parent_category_id).order_by('name')
+    # children = Category.objects.filter(parent_category = parent_category_id).order_by('name')
+    children = category_qs.filter(parent_category = parent_category_id).order_by('name')
     if children:
         for child in children:
             id_str = child.name.replace('\\','').replace(' ','_').replace('\'','').lower()
@@ -52,9 +56,7 @@ def get_category_list(parent_category_id):
             strHTML += '</a>'
             strHTML += get_category_list(child.id) 
             strHTML += '</div>'    
-    # list = [parent_category_id]
-    # [list.append(get_category_list(child.id)) for child in Category.objects.filter(parent_category = parent_category_id)]
-    # return list
+
     return strHTML.replace('\\','')    
 
 def get_product_rating_for_user(user, object):
@@ -271,7 +273,6 @@ class ProductList(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['the_time'] = datetime.now()
         context['sidebar'] = get_category_list(None)
         return context
 
@@ -299,6 +300,7 @@ class ProductList(ListView):
     def get_queryset(self):
         query_search = self.request.GET.get('q', None)
         # print(f"query_search: {query_search}")
+        
         if query_search:
             filter_conditions = (Q(name__icontains = query_search)) | (Q(description__icontains=query_search)) | (Q(sku__icontains=query_search))
             # return Product.objects.filter(name__icontains=query)
@@ -307,34 +309,18 @@ class ProductList(ListView):
             # qs = Product.objects.all()
             filter_conditions = Q(name__isnull = False)
 
-        queryset = Product.objects.filter(filter_conditions).distinct().annotate(avg_rating=Avg('ratings__number_of_stars'), num_ratings=Count('ratings'))
+        queryset = Product.objects.filter(filter_conditions).distinct().annotate(
+            avg_rating=Avg('ratings__number_of_stars'), 
+            num_ratings=Count('ratings')
+        ).prefetch_related('ratings','promotions','product_photos')
+
         ordering = self.get_ordering()
         if ordering:
             if isinstance(ordering, str):
                 ordering = (ordering,)
+
             queryset = queryset.order_by(*ordering)
 
-        # if query_sort:
-        #     print(f"Sort by {query_sort}")
-        #     if query_sort == "priceLowToHigh":
-        #         qs = Product.objects.filter(filter_conditions).distinct().order_by('price')
-        #     elif query_sort == "priceHighToLow":
-        #         qs = Product.objects.filter(filter_conditions).distinct().order_by('-price')
-        #     elif query_sort == "aToZ":
-        #         qs = Product.objects.filter(filter_conditions).distinct().order_by('name')
-        #     elif query_sort == "zToA":
-        #         qs = Product.objects.filter(filter_conditions).distinct().order_by('-name')
-        #     elif query_sort == "new":
-        #         qs = Product.objects.filter(filter_conditions).distinct().order_by('-created_at')
-        #     else:
-        #         # Most popular
-        #         # qs = Product.objects.filter(filter_conditions).distinct().order_by('-ratings__number_of_stars')
-        #         qs = Product.objects.filter(filter_conditions).distinct().annotate(avg_rating=Avg('ratings__number_of_stars'), num_ratings=Count('ratings')).order_by('-avg_rating','-num_ratings')
-            
-        #         # for product in qs:
-        #         #     print(f"{product.name}: Average Rating={product.avg_rating}, Number of Ratings={product.num_ratings}")
-        #     return qs = Product.objects.filter(filter_conditions).distinct().annotate(avg_rating=Avg('ratings__number_of_stars'), num_ratings=Count('ratings'))
-        # return Product.objects.all()
         return queryset
 
 class ProductDetail(DetailView):

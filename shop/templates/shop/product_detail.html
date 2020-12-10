@@ -72,6 +72,7 @@
             <div id="buy-box">
                 <h3>
                     {% if product.is_on_sale %}
+                        <span class="strike-through">${{ product.price|floatformat:2|intcomma }}</span>
                         ${{ product.get_sale_price|floatformat:2|intcomma }}
                         <span class="indicator-sale"> SALE!</span>
                     {% else %}

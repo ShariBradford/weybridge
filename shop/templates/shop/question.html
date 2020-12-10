@@ -6,13 +6,13 @@
     </a>:
 </p>
 <p>{{ question.content }}</p>
-<p>{{ question.created_at }}</p>
+<p>{{ question.date_asked }}</p>
 
-{% if question.answer %}
+{% for answer in question.answers %}
 <p><span style="font-weight: bold;">Answer </span>by 
     <a href="{% url 'accounts:user_profile' profiled_user_id=question.answerer.id %}">
-    {{ question.answerer.first_name }} {{ question.answerer.last_name }}
+    {{ answer.answerer.first_name }} {{ answer.answerer.last_name }}
     </a>: 
 </p>
-<p>{{ question.answer }}</p>
+<p>{{ answer }}</p>
 {% endif %}

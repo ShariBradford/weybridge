@@ -385,3 +385,7 @@ ul#id_number_of_stars li input:checked {
 .main-image img {
     width: 475px;
 }
+
+.strike-through {
+    text-decoration: line-through;
+}
