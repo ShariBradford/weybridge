@@ -97,6 +97,46 @@ function productQuestion(itemId){
     });
 }
 
+function answerQuestion(itemId, form){
+    console.log('about to answer a question via ajax.');
+    var call = $.ajax({
+        url: form.attr('action'), //'/question/' + itemId + '/answer',
+        method: 'POST',
+        data: form.serialize(),
+    })
+    .done(function(data){
+        console.log('Successfully answered question id ' + itemId + '.');
+        $('#question-' + itemId).replaceWith(data);
+    })
+    .fail(function(error){
+        console.log("Error submitting comment.");
+        console.log(error);
+    });
+
+    return call;
+}
+
+function getProductInfo(product_id){
+    console.log('about to obtain product info via ajax.');
+    var call = $.ajax({
+        url: '/product/' + product_id + '/getinfo/',
+        method: 'POST',
+        data: {
+            'csrfmiddlewaretoken' : $('input[name="csrfmiddlewaretoken"]').val(), // getCookie('csrftoken'),
+        },
+    })
+    .done(function(data){
+        console.log('Product info for product id ' + product_id + ':');
+        console.log(data);
+    })
+    .fail(function(error){
+        console.log("Error submitting comment.");
+        console.log(error);
+    });
+
+    return call;
+}
+
 $('.ratings-form input[type="submit"]').on('click', function(e){
     e.preventDefault();
     var itemId = $(this).closest('.container').attr('data-id');
@@ -134,6 +174,41 @@ $('.comment-form input[type="submit"]').on('click', function(e){
     productQuestion(itemId);
     $(this).parent().trigger('reset')
     $('#newComment').hide();
+});
+
+$('#usersComments').on('click','.answer-button', function(e){
+    e.preventDefault();
+    $(this).siblings('.answer-form').toggle()
+})
+
+$('#usersComments').on('click','.answer-form input[type="submit"]', function(e){
+    e.preventDefault();
+    var itemId = $(this).closest('.question').attr('id').replace('question-',''),
+        form_element = $(this).parent();
+
+    answerQuestion(itemId, form_element).done(function(){
+        $('#question-' + itemId).find('form.answer-form')[0].reset(); //.hide()
+    });
+    // form_element.trigger('reset').hide()
+});
+
+$('.content').on('change', '.new-promotion .promotion-form select[name="product"]', function(e){
+    console.log('Product dropdown changed.')
+    var product_id = $(this).val();
+    getProductInfo(product_id).done(function(data){
+        console.log('got product info!');
+        var htmlString = '<div>';
+        htmlString += '<img src="' + data.product_photo_url + '" alt="' + data.name + '" style="width:40px;">'
+        htmlString += '<small class="text-muted ml-2 mt-0 mb-3">';
+        htmlString += 'Retail Price: $' + data.retail_price;
+        htmlString += '   &bull;   ';
+        htmlString += 'SKU: ' + data.sku;
+        htmlString += '   &bull;   ';
+        htmlString += 'Inventory: ' + data.inventory_stock;
+        htmlString += '</small></div>'
+
+        $('div.product-info').html(htmlString)
+    });
 });
 
 $('.existing-images').on('click', '.existing-image .action-button', function(e){

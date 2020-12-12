@@ -9,7 +9,9 @@ from django.db.models import Avg, F, Q, Count, FilteredRelation
 from ipware import get_client_ip
 from datetime import datetime
 from django.contrib.auth.models import User
+from django.http import JsonResponse, HttpResponseNotAllowed
 from .models import *
+from django.core import serializers
 
 category_qs = Category.objects.all()
 throw_away_var = len(category_qs)   #force evaluation of queryset
@@ -295,8 +297,8 @@ class ProductList(ListView):
                 return '-created_at'
             else:
                 # Most popular
-                return ['-avg_rating','-num_ratings']
-        return ['-avg_rating','-num_ratings']
+                return ['-avg_rating','-num_ratings'] # assumes self.queryset is annotated with these two fields
+        return ['-avg_rating','-num_ratings'] # assumes self.queryset is annotated with these two fields
 
     def get_queryset(self):
         query_search = self.request.GET.get('q', None)
@@ -343,6 +345,7 @@ class ProductDetail(DetailView):
         context['user_rating_this_item'] = rating_info['user_rating_this_item']
         context['form'] = rating_info['form']
         context['question_form'] = QuestionForm()
+        context['answer_form'] = AnswerForm()
         context['categories'] = " | ".join(list(category.name for category in self.object.categories.all()))
         # print(f'User Rating: {context["user_rating_this_item"].number_of_stars or None}')   
 
@@ -468,6 +471,11 @@ class PromotionDetail(DetailView):
 class PromotionCreate(CreateView):
     model = Promotion
     form_class = PromotionForm
+
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     # context['products'] = Product.objects.values('name','price','product_photos')
+    #     return context
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -643,7 +651,7 @@ def question_product(request, product_id):
         form = QuestionForm(request.POST, instance=question)
         if form.is_valid():
             question = form.save()
-    
+            
     else: #this is a GET request so return to the details page where the blank rating form is displayed
         return redirect(reverse('product_details'))
     
@@ -652,6 +660,52 @@ def question_product(request, product_id):
         'product': product,
         'question': question,
         'question_form': form,
+        'answer_form': AnswerForm(),
     }
    
     return render(request, 'shop/question.html', context)
+
+@login_required
+def answer_question(request, question_id):
+    # This view can be called via Ajax and returns only the markup for the new answer
+
+    user = request.user
+    question = Question.objects.get(id=question_id)
+
+    # print(f'Processing product answer on '{product.name}' from {user.full_name()}')
+    if request.method == 'POST':
+
+        answer = Answer(answerer=user, question=question, updated_by=user)
+        form = AnswerForm(request.POST, instance=answer)
+        if form.is_valid():
+            answer = form.save()
+            print("answer form is valid")
+            form = AnswerForm()  # return a blank form that can be reused for the next answer
+
+    else: #this is a GET request so return to the details page where the blank rating form is displayed
+        return redirect(reverse('product_details'))
+    
+    context = {
+        'user': user,
+        'answer': answer,
+        'question': question,
+        'answer_form': form,
+    }
+   
+    return render(request, 'shop/question.html', context)
+
+def get_product_info(request, product_id):
+    if request.method == 'POST':
+        # data = serializers.serialize('json', Product.objects.filter(id=product_id).prefetch_related('product_photos'))
+        product = Product.objects.get(id=product_id)
+        product_photo_url = product.get_default_photo_url()
+        data = {
+            'name': product.name,
+            'id': product.id,
+            'sku': product.sku,
+            'retail_price': product.price,
+            'inventory_stock': product.inventory_stock,
+            'product_photo_url': product_photo_url,
+        }
+        return JsonResponse(data)
+    return HttpResponseNotAllowed(['POST'])

@@ -70,7 +70,7 @@ class CategoryForm(ModelForm):
 
 def product_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/dish_<id>/<filename>
-    return 'product_{0}/size_chart_'.format(instance.id, filename)
+    return f'product_{instance.id}/size_chart_{filename}'
 
 class Product(models.Model):
     name = models.CharField(max_length=255)

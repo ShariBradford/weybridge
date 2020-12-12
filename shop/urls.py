@@ -22,6 +22,7 @@ product_patterns = [
     path('<int:product_id>/question/', views.question_product, name="question_product"),
     path('<int:product_id>/favorite/', views.favorite, name="favorite"),
     path('<int:product_id>/unfavorite/', views.unfavorite, name="unfavorite"),
+    path('<int:product_id>/getinfo/', views.get_product_info, name="get_product_info"),
     path('product_photo/<int:product_photo_id>/delete/', views.product_photo_delete, name="product_photo_delete"),
     path('product_photo/<int:product_photo_id>/makeprimary/', views.product_photo_make_primary, name="product_photo_make_primary"),
 ]
@@ -54,4 +55,5 @@ urlpatterns = [
     path('categories/<int:category_id>',views.CategoryProductList.as_view(), name="category_products"), # products related to categories
     path('favorites/', views.FavoriteProductList.as_view(), name="favorite_products"),
     path('rating/<int:rating_id>/vote/<negint:score>', views.rating_vote, name="rating_vote"),
+    path('question/<int:question_id>/answer', views.answer_question, name="answer_question"),
 ]

@@ -1,4 +1,4 @@
-.container.new-category {
+.container.new-category, .container.new-promotion {
     width: 500px;
     margin: 20px auto;
     padding: 0;
@@ -6,7 +6,7 @@
     border-radius: 8px;
 }
 
-.container.new-category .header {
+.container.new-category .header, .container.new-promotion .header {
     padding: 15px;
     background-color: #03989E;
     display:flex;
@@ -17,11 +17,11 @@
     border-radius: 8px 8px 0 0;
 }
 
-.container.new-category h1 {
+.container.new-category h1, .container.new-promotion h1 {
     padding-top: 10px;
     margin-left: 10px;
 }
-.container.new-category .content {
+.container.new-category .content, .container.new-promotion .content {
     padding: 15px;
 }
 

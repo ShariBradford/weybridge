@@ -6,15 +6,17 @@
 {% endblock css %}
 
 {% block content%} 
-<div class="container new-category">
+<div class="container new-promotion">
     <div class="header">
         <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="Mich Dish logo">
         <div>
             <h1>{% block form_title %}{% endblock form_title %}</h1>
         </div>
     </div>
+    <div class="product-info d-flex justify-content-center align-items-center my-2"></div>
     <div class="content">
         <form action=""
+            class="promotion-form"
             enctype="multipart/form-data" 
             method="POST" 
             role="form" novalidate>

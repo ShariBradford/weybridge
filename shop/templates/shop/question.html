@@ -1,5 +1,5 @@
 {% load humanize static %}
-<div class="question my-4">
+<div class="question my-4" id="question-{{ question.id }}">
     <div class="d-flex align-items-start my-2">
         <img src="{{ question.asker.profile.profile_pic.url }}" style="width:40px;" alt="{{ question.asker.get_full_name }}">
         
@@ -18,6 +18,11 @@
             </small>
         </div><!-- end .question-detail -->
     </div>
+
+    <div class="new-answer">
+        <a href="" class="answer-button btn btn-info btn-small">Answer</a>
+        {% include 'shop/answerForm.html' with form=answer_form %}
+    </div><!-- end #newRating -->
 
     <div class="answers" style="margin-left:50px;">
         {% for answer in question.answers.all %}
