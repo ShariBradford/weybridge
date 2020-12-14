@@ -68,6 +68,40 @@ class CategoryForm(ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control'}),
        }        
 
+class Collection(models.Model):
+    name = models.CharField(max_length=50)
+    description = models.TextField(blank=True, null=True)
+    profile_pic = models.ImageField( 
+        upload_to='collections/', 
+        default= 'collections/blank-collection.jpg',
+        blank=True,
+        null=True,
+        )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User,related_name="collections_updated", on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User,related_name="collections_created", on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name_plural = "collections"
+        ordering: "name"
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('shop:collection_details',kwargs={'pk': self.id})
+
+class CollectionForm(ModelForm):
+    class Meta:
+        model = Collection
+        fields = ['profile_pic', 'name', 'description']
+        widgets = {
+            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file',}),
+            'name' : forms.TextInput(attrs={'class':'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+       }        
+
 def product_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/dish_<id>/<filename>
     return f'product_{instance.id}/size_chart_{filename}'
@@ -81,6 +115,7 @@ class Product(models.Model):
     inventory_stock = models.IntegerField(default=0)
     user_likes = models.ManyToManyField(User, blank=True, null=True, related_name='liked_products')
     # slug = models.SlugField(max_length = 250, null = True, blank = True)
+    collection = models.ForeignKey(Collection,related_name="products", blank=True, null=True, on_delete=models.SET_NULL)
     size_chart = models.FileField(
         upload_to=product_directory_path, 
         blank=True,
@@ -147,13 +182,14 @@ class Product(models.Model):
 class ProductForm(ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'description', 'sku', 'price', 'categories','inventory_stock']
+        fields = ['name', 'description', 'sku', 'price', 'categories', 'collection','inventory_stock']
         widgets = {
             'name' : forms.TextInput(attrs={'class':'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'sku' : forms.TextInput(attrs={'class':'form-control'}),
             'price' : forms.TextInput(attrs={'class':'form-control'}),
             'categories': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'collection' : forms.Select(attrs={'class':'form-control'}),
             'inventory_stock' : forms.TextInput(attrs={'class':'form-control'}),
        }
 

@@ -126,13 +126,45 @@ body {
     /*cursor: pointer;*/
 }
 
-.card .favorite a {
+.favorite a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     background-color: #FFFFFF;
     border-radius: 50%;
-    height: 2.125rem;
-    width: 2.125rem;
-    padding: 3px;
+    height: 38px;
+    width: 38px;
 }
+
+.favorite a:hover {
+    background-color: gray;
+}
+
+.favorite .favorited {
+    color: red;
+}
+
+.favorite .unfavorited {
+    color: gray;
+}
+
+.favorite a:hover .unfavorited {
+    color: red;
+}
+
+#buy-box {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+
+/* #buy-box .favorite {
+    display: inline;
+    background-color: #009EC3 !important;
+    border-radius: .25rem;
+    height: 38px;
+    margin: 0 5px;
+}    */
 
 .card .favorite img {
     width: 32px;
@@ -364,7 +396,7 @@ ul#id_number_of_stars li input:checked {
     padding-left: 0;
 }
 
-.category {
+.sidebar .category {
     margin-left: 20px;
     color: #525252;
     text-decoration: none;

@@ -252,8 +252,7 @@ def favorite(request, product_id):
     #     return redirect(request.GET.get('next'))
     # user could be on any numbmer of pages when they push the favorite button
     # return the user to the same page they were on when they favorited the item
-    # return redirect(request.META.get('HTTP_REFERER'))
-    return redirect('/')
+    return redirect(request.META.get('HTTP_REFERER'))
 
 @login_required
 def unfavorite(request, product_id):
@@ -267,8 +266,8 @@ def unfavorite(request, product_id):
 
     # user could be on any numbmer of pages when they push the favorite button
     # return the user to the same page they were on when they favorited the item
-    # return redirect(request.META.get('HTTP_REFERER'))
-    return redirect('/')
+    return redirect(request.META.get('HTTP_REFERER'))
+    # return redirect('/')
 
 class ProductList(ListView):
     model = Product
@@ -569,24 +568,69 @@ class CategoryProductList(ProductList):
         context['breadcrumbs'] = get_breadcrumbs('category',self.category.id)
         return context
 
-# class CategoryProductList(ListView):
-#     template_name = 'shop/category_products.html'
+class CollectionList(ListView):
+    model = Collection
 
-#     def get_queryset(self):
-#         self.category = get_object_or_404(Category,id=self.kwargs['category_id'])
-#         # get all child categories so that you can display products from this category and its subcategories
-#         self.categories_list = get_category_children(self.category.id)
-#         # print(f"Category: {self.category.name}")
-#         # print(f"Category Hierarchy: {self.categories_list}")
-#         return Product.objects.filter(categories__id__in = self.categories_list)
+class CollectionDetail(DetailView):
+    model = Collection
 
-#     def get_context_data(self, **kwargs):
-#         # Call the base implementation first to get a context
-#         context = super().get_context_data(**kwargs)
-#         # Add in the category
-#         context['category'] = self.category
-#         context['breadcrumbs'] = get_breadcrumbs('category',self.category.id)
-#         return context
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+
+        context['breadcrumbs'] = get_breadcrumbs('other',self.object.id,self.object.name)       
+        context['product_count'] = Product.objects.filter(collection = self.object).count()
+
+        # print(f"Breadcrumbs for {self.object.name}: {context['breadcrumbs']}")
+        # print(f"Product Count for {self.object.name}: {context['product_count']}")
+        return context
+
+class CollectionCreate(CreateView):
+    model = Collection
+    form_class = CollectionForm
+    success_url = reverse_lazy('shop:collections')
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
+
+class CollectionUpdate(UpdateView):
+    model = Collection
+    form_class = CollectionForm
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+
+        # if the user deleted the previous photo, add the default photo
+        if form.cleaned_data['profile_pic'] == None or form.cleaned_data['profile_pic'] == False:
+            form.instance.profile_pic = Collection._meta.get_field('profile_pic').get_default()
+
+        return super().form_valid(form)
+
+class CollectionDelete(DeleteView):
+    model = Collection
+    success_url = reverse_lazy('shop:collections')
+    template_name = 'shop/object_confirm_delete.html'
+
+class CollectionProductList(ProductList):
+    template_name = 'shop/collection_products.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        self.collection = get_object_or_404(Collection,id=self.kwargs['collection_id'])
+        # print(f"Collection: {self.collection.name}")
+
+        return qs.filter(collection = self.collection)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+        # Add in the category
+        context['collection'] = self.collection
+        context['breadcrumbs'] = get_breadcrumbs('other',self.collection.id,self.collection.name)
+        return context
 
 class FavoriteProductList(ProductList):
     template_name = 'shop/favorite_products.html'
@@ -603,12 +647,6 @@ class FavoriteProductList(ProductList):
         context['breadcrumbs'] = get_breadcrumbs('page',None,'Favorites')
         return context
 
-
-# class FavoriteProductList(ListView):
-#     template_name = 'shop/favorite_products.html'
-
-#     def get_queryset(self):
-#         return Product.objects.filter(user_likes = self.request.user.id)
 
 class SaleProductList(ProductList):
     template_name = 'shop/sale_products.html'

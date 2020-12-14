@@ -87,13 +87,35 @@
                     </form>
                 {% else %}
                     <span style="color:red;">SOLD OUT</span>
-                {% endif %}    
+                {% endif %}
+                
+                <div class="favorite">
+                    {% if user in product.user_likes.all %}
+                    <a href="{% url 'shop:unfavorite' product_id=product.id %}" title="Un-favorite">
+                        <span class="favorited"><i class="fas fa-heart"></i></span>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'shop:favorite' product_id=product.id %}" title="Favorite">
+                        <span class="unfavorited"><i class="fas fa-heart"></i></span>
+                    </a>
+                    {% endif %}
+                </div><!-- .favorite -->
+                
             </div><!-- end #buy-box -->
 
-            <div id="categories">
+            <div id="categories" class="product-info-box">
                 <!--Insert link tag to be able to take to similar category pages-->
                 <p>About this item:</p>
-                <p class="categories">Categories: {{ categories }}</p>
+                <!-- <p class="categories">Categories: {{ categories }}</p> -->
+                <p class="categories">
+                    <ul class="categories" style="display:inline;">Categories: 
+                        {% for category in product.categories.all %}
+                        <li class="category">
+                            <a href="{% url 'shop:category_products' category_id=category.id %}">{{ category.name }}</a>
+                        </li>
+                        {% endfor%}
+                    </ul>    
+                </p>
                 <p>SKU: {{ product.sku }}</p>
                 <p>Quantity in Stock: {% if product.inventory_stock %}{{ product.inventory_stock }}{% else %}<span style="color:red;">SOLD OUT</span>{% endif %}</p>
             </div><!-- end #categories -->
@@ -114,7 +136,7 @@
         <div class="ratings-info col-8">
             <div class="d-inline-flex justify-content-start align-items-center">
                 <h4 class="my-0">Average Rating: <span class="rating-number" data-rating="{{average_rating|stringformat:'.2F'}}" data-rating-size="medium"></span></h4>
-                <div class="btn btn-info ml-3 newDish"><small><i class="fas fa-plus-circle"></i> New Rating</small></div>
+                <div class="newDish btn btn-info ml-3"><small><i class="fas fa-plus-circle"></i> New Rating</small></div>
             </div>
 
             <div id="newRating" style="display: none;">
@@ -125,29 +147,40 @@
                 {% endif %}
             </div><!-- end #newRating -->
 
-            <div class="ratings">
+            <div class="ratings my-3">
                 {% for rating in all_ratings %}
-                <div class="rating" id="rating-{{rating.id}}">
-                    {% include 'shop/stars.html' with size="small" %}
-                    <h6>
-                        <a href="{% url 'accounts:user_profile' profiled_user_id=rating.user.id %}">
-                            {{ rating.user.first_name }} {{ rating.user.last_name }}
-                        </a>
-                    </h6>
-                    <p>{{ rating.review }}</p>
-                    <p>{{ rating.created_at }}</p>
-                    <div class="rating-votes">
-                        <a href="/rating/{{ rating.id }}/vote/1">
-                            <i class="far fa-thumbs-up"></i>
-                        </a> 
-                        {{ rating.upvotes}} 
+                <div class="rating d-flex mb-3" id="rating-{{rating.id}}">
+                    <div class="d-flex flex-column justify-content-start" style="width:15%;">
+                        <img src="{{ rating.user.profile.profile_pic.url }}" style="width:40px;" alt="{{ rating.user.first_name }}">
+                        <small class="text-muted">
+                            <a href="{% url 'accounts:user_profile' profiled_user_id=rating.user.id %}">
+                                {{ rating.user.first_name }} {{ rating.user.last_name|slice:":1" }}
+                            </a>
+                        </small>
+                        <small class="text-muted">{{ rating.user.profile.location }}</small>
+                    </div>
+                    <div class="my-0 ml-3">
+                        <p class="my-0">
+                            {% include 'shop/stars.html' with size="small" %}
+                        </p>
+                        <p class="my-0">{{ rating.review }}</p>
+                        <p class="my-0">{{ rating.created_at }}</p>
+                        <div class="rating-votes my-0">
+                            <a href="/rating/{{ rating.id }}/vote/1">
+                                <i class="far fa-thumbs-up"></i>
+                            </a> 
+                            {{ rating.upvotes}} 
 
-                        <a href="/rating/{{ rating.id }}/vote/-1"><!-- url 'shop:rating_vote' rating_id=rating.id score=-1 -->
-                            <i class="far fa-thumbs-down"></i>
-                        </a> 
-                        {{ rating.downvotes}}                         
+                            <a href="/rating/{{ rating.id }}/vote/-1"><!-- url 'shop:rating_vote' rating_id=rating.id score=-1 -->
+                                <i class="far fa-thumbs-down"></i>
+                            </a> 
+                            {{ rating.downvotes}}                         
+                        </div>
                     </div>
                 </div><!-- end .rating -->
+                <div class="" style="padding:0 30px;">
+                    <p style="border-bottom:1px solid lightgrey;"></p>
+                </div>
                 {% endfor %}
             </div><!-- end .ratings -->
         </div><!-- end .ratings-info -->

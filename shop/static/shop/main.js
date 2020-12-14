@@ -149,7 +149,7 @@ $('[data-rating]').html(function(index,oldHTML){
     return getRatingStars(rating, size);
 })
 
-$('.newDish').click(function(e){
+$('.ratings-info').on('click','.newDish', function(e){
     // toggle new rating button
     if($(this).find('small').text() == ' New Rating') {
         $(this).find('small').html('<i class="fas fa-minus-circle"></i> Hide');

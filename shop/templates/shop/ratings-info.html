@@ -4,20 +4,48 @@
 </div>
 
 <div id="newRating" style="display: none;">
-    {% include 'shop/ratingForm.html' %}
+    {% if user_has_rated_item %}
+        <p>You've already rated this item: 
+            <span class="rating-number" data-rating="{{ user_rating_this_item.number_of_stars }}" data-rating-size="medium"></span>
+        </p>
+    {% else %}
+        {% include 'shop/ratingForm.html' %}
+    {% endif %}
 </div><!-- end #newRating -->
 
-<div class="ratings">
+<div class="ratings my-3">
     {% for rating in all_ratings %}
-    <div class="rating">
-        {% include 'shop/stars.html' with size="small" %}
-        <h6>
-            <a href="{% url 'accounts:user_profile' profiled_user_id=rating.user.id %}">
-                {{ rating.user.first_name }} {{ rating.user.last_name }}
-            </a>
-        </h6>
-        <p>{{ rating.review }}</p>
-        <p>{{ rating.created_at }}</p>
+    <div class="rating d-flex mb-3" id="rating-{{rating.id}}">
+        <div class="d-flex flex-column justify-content-start" style="width:15%;">
+            <img src="{{ rating.user.profile.profile_pic.url }}" style="width:40px;" alt="{{ rating.user.first_name }}">
+            <small class="text-muted">
+                <a href="{% url 'accounts:user_profile' profiled_user_id=rating.user.id %}">
+                    {{ rating.user.first_name }} {{ rating.user.last_name|slice:":1" }}
+                </a>
+            </small>
+            <small class="text-muted">{{ rating.user.profile.location }}</small>
+        </div>
+        <div class="my-0 ml-3">
+            <p class="my-0">
+                {% include 'shop/stars.html' with size="small" %}
+            </p>
+            <p class="my-0">{{ rating.review }}</p>
+            <p class="my-0">{{ rating.created_at }}</p>
+            <div class="rating-votes my-0">
+                <a href="/rating/{{ rating.id }}/vote/1">
+                    <i class="far fa-thumbs-up"></i>
+                </a> 
+                {{ rating.upvotes}} 
+
+                <a href="/rating/{{ rating.id }}/vote/-1"><!-- url 'shop:rating_vote' rating_id=rating.id score=-1 -->
+                    <i class="far fa-thumbs-down"></i>
+                </a> 
+                {{ rating.downvotes}}                         
+            </div>
+        </div>
     </div><!-- end .rating -->
+    <div class="" style="padding:0 30px;">
+        <p style="border-bottom:1px solid lightgrey;"></p>
+    </div>
     {% endfor %}
 </div><!-- end .ratings -->

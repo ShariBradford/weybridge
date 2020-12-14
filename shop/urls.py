@@ -44,6 +44,14 @@ category_patterns = [
     path('<int:pk>/delete/', views.CategoryDelete.as_view(), name="category_delete"),
 ]
 
+collection_patterns = [
+    # collection/
+    path('add/', views.CollectionCreate.as_view(), name="collection_add"),
+    path('<int:pk>/', views.CollectionDetail.as_view(), name="collection_details"),
+    path('<int:pk>/update/', views.CollectionUpdate.as_view(), name="collection_update"),
+    path('<int:pk>/delete/', views.CollectionDelete.as_view(), name="collection_delete"),
+]
+
 urlpatterns = [
     path('', views.ProductList.as_view(), name='index'), #views.index, name="index"),
     path('product/', include(product_patterns)),
@@ -52,7 +60,10 @@ urlpatterns = [
     path('promotions/', views.PromotionList.as_view(), name="promotions"), # list of promotions
     path('category/', include(category_patterns)), # adding, deleting, updating, viewwing individual categories
     path('categories/', views.CategoryList.as_view(), name="categories"), # list of categories
-    path('categories/<int:category_id>',views.CategoryProductList.as_view(), name="category_products"), # products related to categories
+    path('categories/<int:category_id>',views.CategoryProductList.as_view(), name="category_products"), # products related to categories    
+    path('collection/', include(collection_patterns)), # adding, deleting, updating, viewwing individual collections
+    path('collections/', views.CollectionList.as_view(), name="collections"), # list of collections
+    path('collections/<int:collection_id>',views.CollectionProductList.as_view(), name="collection_products"), # products related to collections
     path('favorites/', views.FavoriteProductList.as_view(), name="favorite_products"),
     path('rating/<int:rating_id>/vote/<negint:score>', views.rating_vote, name="rating_vote"),
     path('question/<int:question_id>/answer', views.answer_question, name="answer_question"),

@@ -59,11 +59,11 @@
                 <div class="favorite">
                     {% if user in product.user_likes.all %}
                     <a href="{% url 'shop:unfavorite' product_id=product.id %}" title="Un-favorite">
-                        <span style="color:red;"><i class="fas fa-heart"></i></span>
+                        <span class="favorited"><i class="fas fa-heart"></i></span>
                     </a>
                     {% else %}
                     <a href="{% url 'shop:favorite' product_id=product.id %}" title="Favorite">
-                        <span style="color:gray;"><i class="fas fa-heart"></i></span>
+                        <span class="unfavorited"><i class="fas fa-heart"></i></span>
                     </a>
                     {% endif %}
                 </div><!-- .favorite -->

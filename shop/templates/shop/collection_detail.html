@@ -1,0 +1,87 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'shop/css/product.css' %}">
+{% endblock css %}
+
+{% block greeting %}{% if user.is_authenticated %} {{ user.first_name }}{% else %}{% endif %}{% endblock greeting %}
+
+{% block favorites %}
+{% if user.is_authenticated %}
+<a href="{% url 'shop:favorite_products' %}" class="nav-link"><i class="fas fa-bookmark"></i>Favorites</a>
+{% else %}
+{% endif %}
+{% endblock favorites %}
+
+{% block profile %}
+{% if user.is_authenticated %}
+<a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+        class="fas fa-user-cog"></i>Profile</a>
+{% else %}
+<a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fas fa-user-cog"></i>Register</a>
+{% endif %}
+{% endblock profile %}
+
+{% block login %}
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i>Logout</a>
+{% else %}
+<a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i>Login</a>
+{% endif %}
+{% endblock login %}
+
+{% block content %}
+<div class="container" data-id="{{ collection.id }}">
+    {% include 'shop/breadcrumbs.html' %}
+
+    <div class="dish-header d-flex flex-column align-items-center">
+
+        <div class="dish-title d-inline-flex align-items-baseline">
+            <h1 class="my-0">{{ collection.name }}</h1>
+            {% if request.user.is_staff %}
+            <p class="edit-category ml-2 my-0" title="Edit" style="color:#009EC3">
+                <a href="{% url 'shop:collection_update' pk=collection.id %}">
+                    <small><i class="fas fa-pen"></i> Edit</small>
+                </a>
+            </p>
+
+            <p class="delete-category ml-2 my-0" title="Delete" style="color:red">
+                <a href="{% url 'shop:collection_delete' pk=collection.id %}">
+                    <small><i class="fas fa-times" style="color:red"></i> Delete</small>
+                </a>
+            </p>
+            {% endif %}
+        </div><!-- end .dish-title -->
+    </div><!-- end .dish-header-->
+
+    <div class="row">
+
+        <div class="col-8">
+            <div class="dish-image">
+                <img src="{{ collection.profile_pic.url }}" data-id="{{ collection.id }}" alt="Collection Picture Here">
+            </div><!-- end .dish-image -->
+
+            <div class="description">Description: 
+                <div>{{ collection.description|linebreaks }}</div>
+            </div><!-- end .description -->
+        </div><!-- end .col-8 -->
+    
+        <div class="col-4">
+            <div id="categories">
+                <!--Insert link tag to be able to take to similar category pages-->
+                <p>About this collection:</p>
+                <p>Number of Products in Collection: {{ product_count }}</p>
+            </div><!-- end #categories-->
+        </div><!-- end .col-4 -->
+    </div><!-- end .row -->
+
+    <div class="row">
+        {% if request.user.is_staff %}
+        <p style="font-style: italic;"><small>Created by {{ collection.created_by.get_full_name }} on {{ collection.created_at }}. Updated by {{ collection.updated_by.first_name }} {{ collection.updated_by.last_name }} on {{ collection.updated_at }}.</small></p>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}

@@ -11,14 +11,30 @@
     max-height: 300px;
 }
 
-/*
-.recipe-details div {
-    white-space: pre-line;
-}
-*/
 .dish-meta, #categories {
     padding: 20px 10px 10px 10px;
     margin: 0 0 20px 0;
     border: 1px solid #009ec3;
     border-radius: 8px;
 }
+
+.product-info-box ul.categories {
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+}
+
+.product-info-box ul.categories li {
+    display: inline-block;
+    list-style-type: none;
+    text-decoration: none;
+}
+
+.product-info-box ul.categories li::after {
+    content:' | ';
+}
+
+.product-info-box ul.categories li:last-child::after {
+    content:'';
+}
+
