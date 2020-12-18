@@ -1,5 +1,5 @@
 {% extends 'shop/base.html' %}
-{% load static %}
+{% load static shop_extras %}
 {% block css %}
 <link rel="stylesheet" href="{% static 'shop/css/categories.css' %}">
 {% endblock css %}
@@ -37,40 +37,44 @@
 {% endblock login %}
 
 {% block content %}
-<div class="container">
-  
-  <div class="header d-flex align-items-center">
-    <h3 class="mr-3">Select A Collection</h3>
-    {% if request.user.is_staff %}
-    <a href="{%  url 'shop:collection_add' %}" class="btn btn-info" role="button" style="font-weight:bold;">New</a>
-    {% endif %}
+  {% include 'shop/breadcrumbs.html' %}
+
+  {% sidebar %}
+
+  <div class="container">
+    
+    <div class="header d-flex align-items-center">
+      <h3 class="mr-3">Select A Collection</h3>
+      {% if request.user.is_staff %}
+      <a href="{%  url 'shop:collection_add' %}" class="btn btn-info" role="button" style="font-weight:bold;">New</a>
+      {% endif %}
+      </div>
+
+    <div id="categories">
+
+      {% for collection in object_list %}
+      <div class="category" id="{{ collection.name }}" data-id="{{ collection.id }}">
+        <a href="{% url 'shop:collection_products' collection_id=collection.id %}">
+          <img src="{{ collection.profile_pic.url }}" alt="Picture of collection {{ collection.name }}">
+          <h5>{{ collection.name }}</h5>
+          {% if request.user.is_staff %}
+          <p class="edit-category" title="Edit" style="color:#009EC3">
+            <a href="{% url 'shop:collection_update' pk=collection.id %}">
+                <small><i class="fas fa-pen"></i> Edit</small>
+            </a>
+            <a href="{% url 'shop:collection_delete' pk=collection.id %}">
+              <small><i class="fas fa-times" style="color:red;"></i> Delete</small>
+            </a>
+            <a href="{% url 'shop:collection_details' pk=collection.id %}">
+              <small><i class="fas fa-info-circle"></i> Details</small>
+            </a>
+          </p>
+          {% endif %}
+        </a>
+      </div>
+      {% endfor %}
+
     </div>
-
-  <div id="categories">
-
-    {% for collection in object_list %}
-    <div class="category" id="{{ collection.name }}" data-id="{{ collection.id }}">
-      <a href="{% url 'shop:collection_products' collection_id=collection.id %}">
-        <img src="{{ collection.profile_pic.url }}" alt="Picture of collection {{ collection.name }}">
-        <h5>{{ collection.name }}</h5>
-        {% if request.user.is_staff %}
-        <p class="edit-category" title="Edit" style="color:#009EC3">
-          <a href="{% url 'shop:collection_update' pk=collection.id %}">
-              <small><i class="fas fa-pen"></i> Edit</small>
-          </a>
-          <a href="{% url 'shop:collection_delete' pk=collection.id %}">
-            <small><i class="fas fa-times" style="color:red;"></i> Delete</small>
-          </a>
-          <a href="{% url 'shop:collection_details' pk=collection.id %}">
-            <small><i class="fas fa-info-circle"></i> Details</small>
-          </a>
-        </p>
-        {% endif %}
-      </a>
-    </div>
-    {% endfor %}
-
   </div>
-</div>
 
 {% endblock %}

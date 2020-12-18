@@ -1,5 +1,5 @@
 {% extends 'shop/base.html' %}
-{% load static humanize %}
+{% load static humanize shop_extras %}
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'shop/css/dashboard.css' %}">
@@ -34,6 +34,10 @@
 
 
 {% block content %}
+{% include 'shop/breadcrumbs.html' %}
+
+{% sidebar %}
+
 <div class="container">
     <div class="my-4">
         {% if request.user.is_staff %}

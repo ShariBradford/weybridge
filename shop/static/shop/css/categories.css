@@ -5,7 +5,7 @@
     flex-wrap: wrap;
 }
 
-.category {
+#categories .category {
     width: 200px;
     padding: 10px;
     margin: 10px;
@@ -14,13 +14,13 @@
     color: #009EC3
 }
 
-.category > a {
+#categories .category > a {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-.category img {
+#categories .category img {
     width: 100%;
 }

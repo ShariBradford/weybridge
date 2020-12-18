@@ -1,0 +1,22 @@
+<div class="sidebar">
+    {% for category in categories %}
+    <div class="category" id="category-{{ category.id }}" style="margin-left:{{ category.indent_px}}">
+            <a href="{% url 'shop:category_products' category_id=category.id %}">{{ category.name }}</a>
+    </div>                
+    {% endfor %}
+    <div class="category" id="category-all" style="margin-left:0px">
+        <a href="{% url 'shop:categories' %}">All Categories</a>
+    </div>
+    <div class="category" id="category-collections" style="margin-left:0px">
+        <a href="{% url 'shop:collections' %}">Collections</a>
+    </div>                
+    <div class="category" id="category-sale" style="margin-left:0px">
+        <a href="{% url 'shop:sale_products' %}">Sale</a>
+    </div>                
+
+    {% if request.user.is_staff %}
+    <div class="category" id="category-sale" style="margin-left:0px">
+        <a href="{% url 'shop:promotions' %}">Sale</a>
+    </div>                
+    {% endif %}
+</div>

@@ -72,6 +72,7 @@
                 <!--Insert link tag to be able to take to similar category pages-->
                 <p>About this collection:</p>
                 <p>Number of Products in Collection: {{ product_count }}</p>
+                <p><a href="{% url 'shop:collection_products' collection_id=collection.id %}">See all products in this collection</a></p>
             </div><!-- end #categories-->
         </div><!-- end .col-4 -->
     </div><!-- end .row -->

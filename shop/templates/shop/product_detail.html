@@ -106,7 +106,9 @@
             <div id="categories" class="product-info-box">
                 <!--Insert link tag to be able to take to similar category pages-->
                 <p>About this item:</p>
-                <!-- <p class="categories">Categories: {{ categories }}</p> -->
+                {% if product.collection %}
+                <p class="collection">Collection: <a href="{% url 'shop:collection_details' pk=product.collection.id %}">{{ product.collection.name }}</a></p>
+                {% endif %}
                 <p class="categories">
                     <ul class="categories" style="display:inline;">Categories: 
                         {% for category in product.categories.all %}

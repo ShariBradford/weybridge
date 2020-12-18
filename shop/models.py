@@ -114,7 +114,6 @@ class Product(models.Model):
     price = models.FloatField()
     inventory_stock = models.IntegerField(default=0)
     user_likes = models.ManyToManyField(User, blank=True, null=True, related_name='liked_products')
-    # slug = models.SlugField(max_length = 250, null = True, blank = True)
     collection = models.ForeignKey(Collection,related_name="products", blank=True, null=True, on_delete=models.SET_NULL)
     size_chart = models.FileField(
         upload_to=product_directory_path, 
@@ -126,6 +125,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(User,related_name="products_updated", on_delete=models.CASCADE)
     created_by = models.ForeignKey(User,related_name="products_created", on_delete=models.CASCADE)
+    # slug = models.SlugField(max_length = 250, null = True, blank = True)
 
     def __str__(self):
         return self.name
@@ -182,7 +182,7 @@ class Product(models.Model):
 class ProductForm(ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'description', 'sku', 'price', 'categories', 'collection','inventory_stock']
+        fields = ['name', 'description', 'sku', 'price', 'categories', 'collection','inventory_stock','size_chart','active']
         widgets = {
             'name' : forms.TextInput(attrs={'class':'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
@@ -191,6 +191,8 @@ class ProductForm(ModelForm):
             'categories': forms.SelectMultiple(attrs={'class': 'form-control'}),
             'collection' : forms.Select(attrs={'class':'form-control'}),
             'inventory_stock' : forms.TextInput(attrs={'class':'form-control'}),
+            'size_chart': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
+            'active' : forms.CheckboxInput(attrs={'class':'form-control'}),
        }
 
 class ProductFormWithImages(ProductForm):
@@ -206,7 +208,7 @@ class ProductFormWithImages(ProductForm):
     )
 
     class Meta(ProductForm.Meta):
-        fields = ['images','name', 'description', 'sku', 'price', 'categories','inventory_stock']
+        fields = ['images','name', 'collection', 'description', 'sku', 'price', 'categories','inventory_stock','size_chart','active']
     
 class Promotion(models.Model):
     product = models.ForeignKey(Product, related_name='promotions', on_delete=models.CASCADE)

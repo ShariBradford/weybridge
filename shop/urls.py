@@ -67,4 +67,5 @@ urlpatterns = [
     path('favorites/', views.FavoriteProductList.as_view(), name="favorite_products"),
     path('rating/<int:rating_id>/vote/<negint:score>', views.rating_vote, name="rating_vote"),
     path('question/<int:question_id>/answer', views.answer_question, name="answer_question"),
+    path('test/', views.test, name="test"),
 ]

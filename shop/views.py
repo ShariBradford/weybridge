@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from django.db.models import Avg, F, Q, Count, FilteredRelation
+from django.db.models import Avg, F, Q, Count, FilteredRelation, Value, IntegerField, CharField
 from ipware import get_client_ip
 from datetime import datetime
 from django.contrib.auth.models import User
@@ -15,6 +15,9 @@ from django.core import serializers
 
 category_qs = Category.objects.all()
 throw_away_var = len(category_qs)   #force evaluation of queryset
+
+def test(request):
+    return render(request, 'shop/test.html', {'test': 'Testing 123'})
 
 def get_category_parent(category_id):
     '''
@@ -59,7 +62,20 @@ def get_category_list(parent_category_id):
             strHTML += get_category_list(child.id) 
             strHTML += '</div>'    
 
-    return strHTML.replace('\\','')    
+    return strHTML.replace('\\','')  
+
+def get_categories(parent_category_id,level=0):
+    categories = []
+    
+    for current_category in category_qs.filter(parent_category = parent_category_id).annotate(
+        indent_level=Value(level, IntegerField()),
+        indent_px=Value(f"{level*20}px", CharField()),
+    ).order_by('name'):
+        categories.append(current_category) 
+        for child_category in get_categories(current_category.id, level+1):
+            categories.append(child_category)
+
+    return categories    
 
 def get_product_rating_for_user(user, object):
     # returns information about whether the user has rated a particular product
@@ -274,7 +290,7 @@ class ProductList(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['sidebar'] = get_category_list(None)
+        # context['sidebar'] = get_category_list(None)
         context['sort_by'] = self.request.GET.get('sort_by', 'mostPopular')
         return context
 
@@ -464,6 +480,12 @@ def product_photo_make_primary(request, product_photo_id):
 class PromotionList(ListView):
     model = Promotion
 
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+        context['breadcrumbs'] = get_breadcrumbs('page',None,'Promotions')
+        return context
+
 class PromotionDetail(DetailView):
     model = Promotion
 
@@ -496,6 +518,12 @@ class PromotionDelete(DeleteView):
 
 class CategoryList(ListView):
     model = Category
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+        context['breadcrumbs'] = get_breadcrumbs('page',None,'Categories')
+        return context
 
 class CategoryDetail(DetailView):
     model = Category
@@ -571,6 +599,12 @@ class CategoryProductList(ProductList):
 class CollectionList(ListView):
     model = Collection
 
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+        context['breadcrumbs'] = get_breadcrumbs('page',None,'Collections')
+        return context
+
 class CollectionDetail(DetailView):
     model = Collection
 
@@ -629,7 +663,7 @@ class CollectionProductList(ProductList):
         context = super().get_context_data(**kwargs)
         # Add in the category
         context['collection'] = self.collection
-        context['breadcrumbs'] = get_breadcrumbs('other',self.collection.id,self.collection.name)
+        context['breadcrumbs'] = get_breadcrumbs('page',None,self.collection.name)
         return context
 
 class FavoriteProductList(ProductList):

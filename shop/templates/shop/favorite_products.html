@@ -1,5 +1,5 @@
 {% extends 'shop/base.html' %}
-{% load static %}
+{% load static shop_extras %}
 {% block css %}
 <link rel="stylesheet" href="{% static 'shop/css/favorites.css' %}">
 {% endblock css %}
@@ -28,24 +28,11 @@
 
 
 {% block content %} 
-<!-- <h2>Favorites</h2> -->
 
-<div class="sidebar">
     {% include 'shop/breadcrumbs.html' %}
 
-    {{ sidebar|safe }}
+    {% sidebar %}
 
-    <div class="category">
-        <br><br>
-        <a href="{% url 'shop:sale_products' %}">Sale</a>
-    </div>
-    <p style="text-align: center;">
-        <br><br>
-        <small>
-            <a href="{% url 'shop:categories' %}">All Categories</a>
-        </small>
-    </p>
-</div>
+    {% include 'shop/products.html' %}
 
-{% include 'shop/products.html' %}
-{% endblock%}
+{% endblock %}

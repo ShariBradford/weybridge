@@ -1,0 +1,14 @@
+<div class="sidebar">
+    {{ sidebar|safe }}
+
+    <div class="category">
+        <br><br>
+        <a href="{% url 'shop:sale_products' %}">Sale</a>
+    </div>
+    <p style="text-align: center;">
+        <br><br>
+        <small>
+            <a href="{% url 'shop:categories' %}">All Categories</a>
+        </small>
+    </p>
+</div>
