@@ -287,6 +287,7 @@ def unfavorite(request, product_id):
 
 class ProductList(ListView):
     model = Product
+    paginate_by = 12
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

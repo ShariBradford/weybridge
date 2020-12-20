@@ -1,4 +1,4 @@
-{% load static humanize %}
+{% load static humanize shop_extras %}
 <div class="container products">
     <div class="row d-flex justify-content-between" id="newPost">
         <div class="title">
@@ -92,4 +92,31 @@
             <p>Query returned no results</p>
         {% endif %}
     </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination pagination-sm justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.previous_page_number %}">Previous</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+            {% for page_number in paginator.page_range %}
+                {% if page_number == page_obj.number %}
+                <li class="page-item active">
+                    <span class="page-link">
+                        {{ page_number }}<span class="sr-only"> (current)</span>
+                    </span>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{% querystring page=page_number %}">{{ page_number }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.next_page_number %}">Next</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
