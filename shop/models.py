@@ -162,6 +162,7 @@ class Product(models.Model):
     def is_new(self):
         return self.created_at >= timezone.now() + timedelta(days=-30) 
     is_new.boolean = True
+    is_new.short_description = 'New?'
 
     def is_on_sale(self):
         return self.promotions.filter(
@@ -169,7 +170,8 @@ class Product(models.Model):
             end_date__gte=date.today()
         ).count() > 0
     is_on_sale.boolean = True
-    
+    is_on_sale.short_description = 'New?'
+
     def get_sale_price(self):
         if self.is_on_sale():
             return self.promotions.filter(
@@ -178,7 +180,9 @@ class Product(models.Model):
             ).order_by('-sale_price').first().sale_price
         else:
             return self.price
-
+    get_sale_price.short_description = 'Sale Price'
+    get_sale_price.admin_order_field = 'price'
+    
 class ProductForm(ModelForm):
     class Meta:
         model = Product

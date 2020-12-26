@@ -8,7 +8,7 @@ class ProductAdmin(admin.ModelAdmin):
     filter_horizontal = ('categories',)
     readonly_fields = ('created_by','created_at','updated_by','updated_at')
     search_fields = ('name','description','sku')
-    list_display = ('name', 'sku', 'price', 'inventory_stock','active')
+    list_display = ('name', 'sku', 'price', 'is_on_sale', 'get_sale_price', 'inventory_stock','active')
 
     def save_model(self, request, obj, form, change):
         print(f"Saving {obj.name}. Change = {change}")
