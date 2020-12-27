@@ -3,6 +3,7 @@ from shop.models import Product
 from django import forms
 from django.forms import ModelForm
 from django.contrib.auth.models import User
+from django.shortcuts import reverse
 
 class Cart(models.Model):
     STATUS_OPEN = 1
@@ -29,6 +30,9 @@ class Cart(models.Model):
 
     def __str__(self):
         return f"User {self.user.first_name} has {self.item_count} item(s) in the cart for a total of ${self.total}"
+
+    def get_absolute_url(self):
+        return reverse('cart:cart_details')
 
 class CartItem(models.Model):
     product = models.ForeignKey(Product,related_name="item", on_delete=models.CASCADE)

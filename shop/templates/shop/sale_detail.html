@@ -36,16 +36,16 @@
     <div class="dish-header d-flex flex-column align-items-center">
 
         <div class="dish-title d-inline-flex align-items-baseline">
-            <h1 class="my-0">Promotion</h1>
+            <h1 class="my-0">{{ sale.name }}</h1>
             {% if request.user.is_staff %}
             <p class="edit-category ml-2 my-0" title="Edit" style="color:#009EC3">
-                <a href="{% url 'shop:promotion_update' pk=promotion.id %}">
+                <a href="{% url 'shop:sale_update' pk=sale.id %}">
                     <small><i class="fas fa-pen"></i> Edit</small>
                 </a>
             </p>
 
             <p class="delete-category ml-2 my-0" title="Delete" style="color:red">
-                <a href="{% url 'shop:promotion_delete' pk=promotion.id %}">
+                <a href="{% url 'shop:sale_delete' pk=sale.id %}">
                     <small><i class="fas fa-times" style="color:red"></i> Delete</small>
                 </a>
             </p>
@@ -56,25 +56,57 @@
     <div class="row">
 
         <div class="col-8">
-            <div class="description">Product: {{ promotion.product.name }}</div><!-- end .description -->
-            <div class="retail-price">Retail Price: ${{ promotion.product.price|floatformat:2|intcomma }}</div><!-- end .retail-price -->
-            <div class="sale-price">Sale Price: ${{ promotion.sale_price|floatformat:2|intcomma }}</div><!-- end .sale-price -->
-            <div class="sale">Sale: {{ promotion.sale.name }}</div><!-- end .sale -->
-            <div class="start-date">Start Date: {{ promotion.sale.start_date }}</div><!-- end .start-date -->
-            <div class="end-date">End Date: {{ promotion.sale.end_date }}</div><!-- end .end-date -->
+            <div class="dish-image">
+                <img src="{{ sale.profile_pic.url }}" data-id="{{ sale.id }}" alt="Sale Picture Here">
+            </div><!-- end .dish-image -->
+
+            <div class="description">Description: 
+                <div>{{ sale.description|linebreaks }}</div>
+            </div><!-- end .description -->
+
+            <div class="terms">Terms: 
+                <div>{{ sale.terms|linebreaks }}</div>
+            </div><!-- end .terms -->
         </div><!-- end .col-8 -->
 
         <div class="col-4">
             <div id="categories">
                 <!--Insert link tag to be able to take to similar category pages-->
                 <p>About this category:</p>
+                <div class="start-date">Start Date: {{ sale.start_date }}</div><!-- end .start-date -->
+                <div class="end-date">End Date: {{ sale.end_date }}</div><!-- end .end-date -->
             </div><!-- end #categories-->
         </div><!-- end .col-4 -->
     </div><!-- end .row -->
 
     <div class="row">
+        <table class="table">
+            <thead>
+                <th>Product</th>
+                <th>Retail Price</th>
+                <th>Sale Price</th>
+            </thead>
+
+            <tbody>
+                {% for promotion in sale.promotions.all %}
+                <tr>
+                    <td>
+                        <img src="{{ promotion.product.get_default_photo_url }}" alt="{{ promotion.product.name }}" style="width:30px;">
+                        <a href="{% url 'shop:promotion_details' pk=promotion.id %}">
+                            {{ promotion.product.name }}
+                        </a>
+                    </td>
+                    <td class="retail-price">${{ promotion.product.price|floatformat:2|intcomma }}</td>
+                    <td class="sale-price">${{ promotion.sale_price|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div><!-- end .row -->
+
+    <div class="row">
         {% if request.user.is_staff %}
-        <p style="font-style: italic;"><small>Created by {{ promotion.created_by.get_full_name }} on {{ promotion.created_at }}. Updated by {{ promotion.updated_by.get_full_name }} on {{ promotion.updated_at }}.</small></p>
+        <p style="font-style: italic;"><small>Created by {{ sale.created_by.get_full_name }} on {{ sale.created_at }} Updated by {{ sale.updated_by.get_full_name }} on {{ sale.updated_at }}</small></p>
         {% endif %}
     </div>
 

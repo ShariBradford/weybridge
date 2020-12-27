@@ -110,9 +110,22 @@ body {
     display: flex;
     justify-content: space-between;
     font-weight: 400;
-    font-size: 12pt;
+    font-size: 10pt;
+    color:gray;
     margin-bottom: 5px;
     width: 100%
+}
+
+.card-title a {
+    color:gray;
+}
+
+.card-title a:link {
+    color:gray;
+}
+
+.card-title a:visited {
+    color:gray;
 }
 
 .card-title span {

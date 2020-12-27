@@ -478,6 +478,40 @@ def product_photo_make_primary(request, product_photo_id):
     }
     return render(request,'shop/existing-images.html', context)
 
+class SaleList(ListView):
+    model = Sale
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+        context['breadcrumbs'] = get_breadcrumbs('page',None,'Sales')
+        return context
+
+class SaleDetail(DetailView):
+    model = Sale
+
+class SaleCreate(CreateView):
+    model = Sale
+    form_class = SaleForm
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
+
+class SaleUpdate(UpdateView):
+    model = Sale
+    form_class = SaleForm
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
+
+class SaleDelete(DeleteView):
+    model = Sale
+    success_url = reverse_lazy('shop:sales')
+    template_name = 'shop/object_confirm_delete.html'
+
 class PromotionList(ListView):
     model = Promotion
 
@@ -698,9 +732,14 @@ class SaleProductList(ProductList):
         #     )
         # ).filter(on_sale = True)
 
+        # return qs.filter(
+        #     promotions__start_date__lte=date.today(),
+        #     promotions__end_date__gte=date.today()
+        # )
+
         return qs.filter(
-            promotions__start_date__lte=date.today(),
-            promotions__end_date__gte=date.today()
+            promotions__sale__start_date__lte=date.today(),
+            promotions__sale__end_date__gte=date.today()
         )
 
     def get_context_data(self, **kwargs):

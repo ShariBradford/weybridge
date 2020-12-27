@@ -41,33 +41,27 @@
 <div class="container">
     <div class="my-4">
         {% if request.user.is_staff %}
-        <a href="{% url 'shop:promotion_add' %}" class="btn btn-info"><small><i class="fas fa-plus-circle"></i> New</small></a> 
+        <a href="{% url 'shop:sale_add' %}" class="btn btn-info"><small><i class="fas fa-plus-circle"></i> New</small></a> 
         {% endif %}
     </div>
 
     <table class="table">
         <thead>
             <th>Sale</th>
-            <th>Product</th>
-            <th>Retail Price</th>
-            <th>Sale Price</th>
             <th>Start Date</th>
             <th>End Date</th>
         </thead>
         <tbody>
-            {% for promotion in object_list %}
+            {% for sale in object_list %}
             <tr>
-                <td>{{ promotion.sale.name }}</td>
                 <td>
-                    <img src="{{ promotion.product.get_default_photo_url }}" alt="{{ promotion.product.name }}" style="width:30px;">
-                    <a href="{% url 'shop:promotion_details' pk=promotion.id %}">
-                        {{ promotion.product.name }}
+                    <img src="{{ sale.profile_pic.url }}" alt="{{ sale.name }}" style="width:30px;">
+                    <a href="{% url 'shop:sale_details' pk=sale.id %}">
+                        {{ sale.name }}
                     </a>
                 </td>
-                <td>${{ promotion.product.price|floatformat:2|intcomma }}</td>
-                <td>${{ promotion.sale_price|floatformat:2|intcomma }}</td>
-                <td>{{ promotion.sale.start_date }}</td>
-                <td>{{ promotion.sale.end_date }}</td>
+                <td>{{ sale.start_date }}</td>
+                <td>{{ sale.end_date }}</td>
             </tr>
             {% endfor %}
         </tbody>

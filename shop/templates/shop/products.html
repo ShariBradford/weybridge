@@ -50,7 +50,7 @@
                     {% if request.user.is_staff %}
                     <p class="edit-button" title="Edit" style="color:#009EC3">
                         <a href="{% url 'shop:product_update' pk=product.id %}">
-                            <i class="fas fa-pen"></i>
+                            <i class="fas fa-ellipsis-h"></i><!-- <i class="fas fa-pen"></i> -->
                         </a>
                     </p>
                     {% endif %}

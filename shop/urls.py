@@ -27,6 +27,14 @@ product_patterns = [
     path('product_photo/<int:product_photo_id>/makeprimary/', views.product_photo_make_primary, name="product_photo_make_primary"),
 ]
 
+sale_patterns = [
+    # sale/
+    path('add/', views.SaleCreate.as_view(), name='sale_add'),
+    path('<int:pk>/', views.SaleDetail.as_view(), name="sale_details"),
+    path('<int:pk>/update/', views.SaleUpdate.as_view(), name="sale_update"),
+    path('<int:pk>/delete/', views.SaleDelete.as_view(), name="sale_delete"),
+]
+
 promotion_patterns = [
     # promotion/
     path('add/', views.PromotionCreate.as_view(), name='promotion_add'),
@@ -58,6 +66,8 @@ urlpatterns = [
     path('products/', include(products_patterns)),
     path('promotion/', include(promotion_patterns)),
     path('promotions/', views.PromotionList.as_view(), name="promotions"), # list of promotions
+    path('sale/', include(sale_patterns)),
+    path('sales/', views.SaleList.as_view(), name="sales"), # list of sales
     path('category/', include(category_patterns)), # adding, deleting, updating, viewwing individual categories
     path('categories/', views.CategoryList.as_view(), name="categories"), # list of categories
     path('categories/<int:category_id>',views.CategoryProductList.as_view(), name="category_products"), # products related to categories    

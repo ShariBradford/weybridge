@@ -70,7 +70,7 @@ class CategoryForm(ModelForm):
 
 class Collection(models.Model):
     name = models.CharField(max_length=50)
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True, default="Description coming soon!")
     profile_pic = models.ImageField( 
         upload_to='collections/', 
         default= 'collections/blank-collection.jpg',
@@ -91,6 +91,10 @@ class Collection(models.Model):
 
     def get_absolute_url(self):
         return reverse('shop:collection_details',kwargs={'pk': self.id})
+
+    def get_number_of_products(self):
+        return self.products.count()
+    get_number_of_products.short_description = "# Products"
 
 class CollectionForm(ModelForm):
     class Meta:
@@ -141,6 +145,7 @@ class Product(models.Model):
         average = self.ratings.aggregate(Avg('number_of_stars'))['number_of_stars__avg'] or 0
         # return math.ceil(average)
         return average
+    get_average_rating.short_description = "Average Rating"
 
     def get_default_photo_url(self):
         default_photo = self.product_photos.filter(is_default=True).first()
@@ -158,6 +163,7 @@ class Product(models.Model):
             # print(f"Photo for {self.name}: (model default) {model_default}")
             return f"{settings.MEDIA_URL}{model_default}"
         # return default_photo or first_photo or model_default or None
+    get_default_photo_url.short_description = "Default Photo"
 
     def is_new(self):
         return self.created_at >= timezone.now() + timedelta(days=-30) 
@@ -166,23 +172,23 @@ class Product(models.Model):
 
     def is_on_sale(self):
         return self.promotions.filter(
-            start_date__lte=date.today(),
-            end_date__gte=date.today()
+            sale__start_date__lte=date.today(),
+            sale__end_date__gte=date.today()
         ).count() > 0
     is_on_sale.boolean = True
-    is_on_sale.short_description = 'New?'
+    is_on_sale.short_description = 'On Sale?'
 
     def get_sale_price(self):
         if self.is_on_sale():
             return self.promotions.filter(
-                start_date__lte=date.today(),
-                end_date__gte=date.today()
+                sale__start_date__lte=date.today(),
+                sale__end_date__gte=date.today()
             ).order_by('-sale_price').first().sale_price
         else:
             return self.price
     get_sale_price.short_description = 'Sale Price'
     get_sale_price.admin_order_field = 'price'
-    
+
 class ProductForm(ModelForm):
     class Meta:
         model = Product
@@ -214,7 +220,49 @@ class ProductFormWithImages(ProductForm):
     class Meta(ProductForm.Meta):
         fields = ['images','name', 'collection', 'description', 'sku', 'price', 'categories','inventory_stock','size_chart','active']
     
+def sale_directory_path(instance, filename):
+    # file will be uploaded to MEDIA_ROOT/sales/sale_<id>/<sale_name>
+    return f'sales/sale_{instance.id}/{instance.name}'
+
+class Sale(models.Model):
+    name = models.CharField(max_length=255, default='Sale')
+    start_date = models.DateField(null=True,blank=True, default=date.today)
+    end_date = models.DateField(null=True,blank=True)
+    description = models.CharField(max_length=255, blank=True, null=True, default='Description coming soon!')
+    terms = models.TextField(blank=True, null=True, default='Terms coming soon.')
+    profile_pic = models.ImageField( 
+        upload_to=sale_directory_path, 
+        default= 'sales/blank-sale.jpg',
+        blank=True,
+        null=True,
+        )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User,related_name="sales_updated", on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User,related_name="sales_created", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.name}"
+
+    def get_absolute_url(self):
+        return reverse('shop:sale_details',kwargs={'pk': self.id})
+
+class SaleForm(ModelForm):
+    class Meta:
+        model = Sale
+        fields = ['profile_pic', 'name', 'description', 'terms', 'start_date', 'end_date']
+        widgets = {
+            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file',}),
+            'name' : forms.TextInput(attrs={'class':'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+            'terms': forms.Textarea(attrs={'class': 'form-control'}),
+            'start_date' : forms.TextInput(attrs={'class':'form-control'}),
+            'end_date' : forms.TextInput(attrs={'class':'form-control'}),
+       }
+
 class Promotion(models.Model):
+    name = models.CharField(max_length=255, default='Sale')
+    sale = models.ForeignKey(Sale, related_name='promotions', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, related_name='promotions', on_delete=models.CASCADE)
     sale_price = models.FloatField()
     start_date = models.DateField(null=True,blank=True, default=date.today)
@@ -227,17 +275,19 @@ class Promotion(models.Model):
     def __str__(self):
         return f"{self.product.name} on sale for {self.sale_price}"
 
-    def get_retail_price(self):
-        return self.product.price
-
     def get_absolute_url(self):
         return reverse('shop:promotion_details',kwargs={'pk': self.id})
+
+    def get_retail_price(self):
+        return self.product.price
+    get_retail_price.short_description = "Retail Price"
 
 class PromotionForm(ModelForm):
     class Meta:
         model = Promotion
-        fields = ['product', 'sale_price', 'start_date', 'end_date']
+        fields = ['sale', 'product', 'sale_price', 'start_date', 'end_date']
         widgets = {
+            'sale' : forms.Select(attrs={'class':'form-control'}),
             'product' : forms.Select(attrs={'class':'form-control'}),
             'sale_price' : forms.TextInput(attrs={'class':'form-control'}),
             'start_date' : forms.TextInput(attrs={'class':'form-control'}),
@@ -256,7 +306,8 @@ class Rating(models.Model):
     user = models.ForeignKey(User,related_name="ratings", on_delete=models.CASCADE)
     number_of_stars = models.IntegerField(
         choices=RATING_CHOICES,
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name = 'Rating',
     )
     review = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add = True)
@@ -334,6 +385,11 @@ class Answer(models.Model):
     def __str__(self):
         return f'{self.content}'
 
+    def get_product(self):
+        return self.question.product
+    get_product.short_description = 'Product'
+    # get_product.admin_order_field = 'question__product'
+
 class AnswerForm(ModelForm):
     class Meta:
         model = Answer
@@ -357,12 +413,15 @@ class ProductPhoto(models.Model):
         blank=True,
         null=True,
         )
-    is_default = models.BooleanField(default=False)
+    is_default = models.BooleanField(default=False, verbose_name="Default?")
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
 
     def __str__(self):
         return f"{self.product.name} (ID={self.id})"
+
+    def get_absolute_url(self):
+        return self.picture.url
 
 class ProductPhotoForm(ModelForm):
     class Meta:
