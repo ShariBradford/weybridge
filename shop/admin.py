@@ -29,6 +29,26 @@ class ProductAdmin(admin.ModelAdmin):
             i = ProductPhoto(product=obj)
             i.save()
 
+@admin.register(Sale)
+class SaleAdmin(admin.ModelAdmin):
+    fields = ('name', 'description', 'terms', ('start_date', 'end_date'), 'profile_pic', ('created_by','created_at'), ('updated_by','updated_at'))
+    date_hierarchy = 'start_date'
+    readonly_fields = ('created_by','created_at','updated_by','updated_at')
+    search_fields = ('name','description')
+    list_display = ('name', 'profile_pic','start_date', 'end_date')
+    list_filter = ('start_date', 'end_date')
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            # user is updating item 
+            obj.updated_by = request.user
+        else:
+            # user is creating item
+            obj.created_by = request.user
+            obj.updated_by = request.user
+
+        super(PromotionAdmin,self).save_model(request, obj, form, change)
+
 @admin.register(Promotion)
 class PromotionAdmin(admin.ModelAdmin):
     date_hierarchy = 'start_date'
@@ -183,4 +203,4 @@ class CollectionAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-admin.site.register(Sale)
+# admin.site.register(Sale)

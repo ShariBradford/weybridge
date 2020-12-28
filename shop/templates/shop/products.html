@@ -22,7 +22,7 @@
     </div>
     
     <div class="row" style="width:1400px;">
-        {% if object_list.count %}
+        {% with request.user.profile.favorites.all as favorite_products %}
             {% for product in object_list %}
             <div class="card mr-2 my-2" id="{{ product.id }}">
 
@@ -57,7 +57,7 @@
                 </div> <!-- .card-body -->
 
                 <div class="favorite">
-                    {% if user in product.user_likes.all %}
+                    {% if product in favorite_products %}
                     <a href="{% url 'shop:unfavorite' product_id=product.id %}" title="Un-favorite">
                         <span class="favorited"><i class="fas fa-heart"></i></span>
                     </a>
@@ -87,10 +87,10 @@
                 </div>
                 {% endif %}
             </div><!-- .card -->
+            {% empty %}
+                <p>Query returned no results</p>
             {% endfor %}
-        {% else %}
-            <p>Query returned no results</p>
-        {% endif %}
+        {% endwith %}
     </div>
     <nav aria-label="Page navigation">
         <ul class="pagination pagination-sm justify-content-center">

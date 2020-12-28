@@ -74,7 +74,7 @@
                     {% if product.is_on_sale %}
                         <span class="strike-through">${{ product.price|floatformat:2|intcomma }}</span>
                         ${{ product.get_sale_price|floatformat:2|intcomma }}
-                        <span class="indicator-sale"> SALE!</span>
+                        <span class="indicator-sale" style="font-size:12pt;"> {{ product.get_promotion.sale.name }}</span>
                     {% else %}
                         ${{ product.price|floatformat:2|intcomma }}
                     {% endif %}

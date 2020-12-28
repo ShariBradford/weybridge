@@ -257,34 +257,28 @@ def rating_vote(request, rating_id, score):
 
 @login_required
 def favorite(request, product_id):
-    product = Product.objects.get(id=product_id)
     user = request.user
-    if user not in product.user_likes.all():
-        product.user_likes.add(user)
-        product.save()   #IS THIS NECESSARY?
+
+    if hasattr(user,"profile"): 
+        # adding a second time is OK, it will not duplicate the relation
+        user.profile.favorites.add(product_id)
         # messages.success(request,"Item favorited!")
 
-    # if request.GET.get('next'):
-    #     return redirect(request.GET.get('next'))
     # user could be on any numbmer of pages when they push the favorite button
     # return the user to the same page they were on when they favorited the item
     return redirect(request.META.get('HTTP_REFERER'))
 
 @login_required
 def unfavorite(request, product_id):
-    product = Product.objects.get(id=product_id)
     user = request.user
-    if user in product.user_likes.all():
-        product.user_likes.remove(user)
-        product.save() 
+    if hasattr(user,"profile"):
+        user.profile.favorites.remove(product_id)
         # messages.success(request,"Item unfavorited!")
-    # return render(request, 'shop/action-unfavorite.html', {'product': product})  
-
+ 
     # user could be on any numbmer of pages when they push the favorite button
     # return the user to the same page they were on when they favorited the item
     return redirect(request.META.get('HTTP_REFERER'))
-    # return redirect('/')
-
+ 
 class ProductList(ListView):
     model = Product
     paginate_by = 12
@@ -707,7 +701,13 @@ class FavoriteProductList(ProductList):
     def get_queryset(self):
         qs = super().get_queryset()
 
-        return qs.filter(user_likes = self.request.user.id)
+        if hasattr(self.request.user, 'profile'):
+            user_favorites = self.request.user.profile.favorites.all()
+        else:
+            user_favorites = None
+
+        # return qs.filter(user_likes = self.request.user.id)
+        return qs.filter(id__in = user_favorites)
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context

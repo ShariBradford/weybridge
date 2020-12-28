@@ -98,17 +98,16 @@
                     <li><a class="text-muted" href="#">FAQs</a></li>
                     <li><a class="text-muted" href="#">Size Guide</a></li>
                     <li><a class="text-muted" href="#">Shipping & Returns</a></li>
-                    <li><a class="text-muted" href="#">Another one</a></li>
-                    <li><a class="text-muted" href="#">Last time</a></li>
                 </ul>
             </div>
             <div class="col-6 col-md">
                 <h5>Shop</h5>
                 <ul class="list-unstyled text-small">
-                    <li><a class="text-muted" href="#">Women's Clothing</a></li>
-                    <li><a class="text-muted" href="#">Men's Clothing</a></li>
-                    <li><a class="text-muted" href="#">Furniture</a></li>
-                    <li><a class="text-muted" href="#">Discounts</a></li>
+                    <li><a class="text-muted" href="{% url 'shop:category_products' category_id=1 %}">Women's Clothing</a></li>
+                    <li><a class="text-muted" href="{% url 'shop:category_products' category_id=6 %}">Men's Clothing</a></li>
+                    <li><a class="text-muted" href="{% url 'shop:category_products' category_id=8 %}">Home Decor</a></li>
+                    <li><a class="text-muted" href="{% url 'shop:categories' %}">Categories</a></li>
+                    <li><a class="text-muted" href="{% url 'shop:sale_products' %}">Sale</a></li>
                 </ul>
             </div>
             <div class="col-6 col-md">
@@ -117,7 +116,6 @@
                     <li><a class="text-muted" href="#">Our Story</a></li>
                     <li><a class="text-muted" href="#">Careers</a></li>
                     <li><a class="text-muted" href="#">Privacy & Cookie Policy</a></li>
-                    <li><a class="text-muted" href="#">Locations</a></li>
                 </ul>
             </div>
             <div class="col-6 col-md">

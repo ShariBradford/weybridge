@@ -189,6 +189,17 @@ class Product(models.Model):
     get_sale_price.short_description = 'Sale Price'
     get_sale_price.admin_order_field = 'price'
 
+    def get_promotion(self):
+        if self.is_on_sale():
+            return self.promotions.filter(
+                sale__start_date__lte=date.today(),
+                sale__end_date__gte=date.today()
+            ).order_by('-sale_price').first()
+        else:
+            return None
+    get_promotion.short_description = 'Promotion'
+    get_promotion.admin_order_field = 'price'
+
 class ProductForm(ModelForm):
     class Meta:
         model = Product
@@ -246,6 +257,11 @@ class Sale(models.Model):
 
     def get_absolute_url(self):
         return reverse('shop:sale_details',kwargs={'pk': self.id})
+
+    def has_ended(self):
+        return self.end_date < date.today()
+    has_ended.boolean = True
+    has_ended.short_description = 'Ended?'
 
 class SaleForm(ModelForm):
     class Meta:
@@ -447,6 +463,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
     location = models.CharField(blank=True, null=True,max_length=50)
     birthday = models.DateField(blank=True, null=True)
+    favorites = models.ManyToManyField(Product, blank=True, null=True, related_name='favorited_by')
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
 

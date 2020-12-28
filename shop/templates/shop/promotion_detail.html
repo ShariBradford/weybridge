@@ -56,18 +56,19 @@
     <div class="row">
 
         <div class="col-8">
-            <div class="description">Product: {{ promotion.product.name }}</div><!-- end .description -->
+            <div class="description">Product: <a href="{% url 'shop:product_details' pk=promotion.product.id %}">{{ promotion.product.name }}</a></div><!-- end .description -->
             <div class="retail-price">Retail Price: ${{ promotion.product.price|floatformat:2|intcomma }}</div><!-- end .retail-price -->
             <div class="sale-price">Sale Price: ${{ promotion.sale_price|floatformat:2|intcomma }}</div><!-- end .sale-price -->
-            <div class="sale">Sale: {{ promotion.sale.name }}</div><!-- end .sale -->
+            <div class="sale">Sale: <a href="{% url 'shop:sale_details' pk=promotion.sale.id %}">{{ promotion.sale.name }}</a></div><!-- end .sale -->
             <div class="start-date">Start Date: {{ promotion.sale.start_date }}</div><!-- end .start-date -->
             <div class="end-date">End Date: {{ promotion.sale.end_date }}</div><!-- end .end-date -->
+            {% if promotion.sale.has_ended %}<div style="font-weight: bold;font-style: italic;color:red;">This promotion has ended</div>{% endif %}
         </div><!-- end .col-8 -->
 
         <div class="col-4">
             <div id="categories">
                 <!--Insert link tag to be able to take to similar category pages-->
-                <p>About this category:</p>
+                <img src="{{ promotion.product.get_default_photo_url }}" alt="{{ promotion.product.name }}" style="width:100%">
             </div><!-- end #categories-->
         </div><!-- end .col-4 -->
     </div><!-- end .row -->
