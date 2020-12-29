@@ -90,15 +90,36 @@
                 {% endif %}
                 
                 <div class="favorite">
-                    {% if user in product.user_likes.all %}
-                    <a href="{% url 'shop:unfavorite' product_id=product.id %}" title="Un-favorite">
-                        <span class="favorited"><i class="fas fa-heart"></i></span>
-                    </a>
+                    {% if user.is_authenticated %}
+                    {% if product in favorite_products %}
+                        {% url 'shop:favorite_products' as favorites_page %}
+                        {% if request.path == favorites_page %}
+                            <a href="{% url 'shop:unfavorite' product_id=product.id %}" data-ajax=false title="Un-favorite">
+                                <span class="favorited"><i class="fas fa-heart"></i></span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'shop:ajax_unfavorite' product_id=product.id %}" data-ajax=true title="Un-favorite">
+                                <span class="favorited"><i class="fas fa-heart"></i></span>
+                            </a>
+                        {% endif %}
                     {% else %}
-                    <a href="{% url 'shop:favorite' product_id=product.id %}" title="Favorite">
+                    <a href="{% url 'shop:ajax_favorite' product_id=product.id %}" data-ajax=true title="Favorite">
                         <span class="unfavorited"><i class="fas fa-heart"></i></span>
                     </a>
                     {% endif %}
+
+                {% else %}
+                    {# The user is not authenticated, so we can't perform the favorite via ajax view. #}
+                    {# Instead when the unauthenticated user clicks on the favorite button below, #}
+                    {# they will first be redirected to the login page, with the "next" querystring set to #}
+                    {# the href below. The href below also has a next link that directs the favorite view #}
+                    {# where to redirect the user after favoriting. #}
+
+                    {% url 'shop:favorite' product_id=product.id as the_url %}
+                    <a href="{{ the_url }}?next={{ request.path }}" data-ajax=false title="Favorite">
+                        <span class="unfavorited"><i class="fas fa-heart"></i></span>
+                    </a>
+                {% endif %}
                 </div><!-- .favorite -->
                 
             </div><!-- end #buy-box -->

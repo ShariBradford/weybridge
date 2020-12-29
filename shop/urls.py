@@ -4,6 +4,12 @@ from . import views, converters
 app_name = 'shop'
 register_converter(converters.NegativeIntConverter, 'negint')
 
+ajax_patterns = [
+    # ajax
+    path('favorite/<int:product_id>/', views.ajax_favorite, name="ajax_favorite"),
+    path('unfavorite/<int:product_id>/', views.ajax_unfavorite, name="ajax_unfavorite"),
+]
+
 products_patterns = [
     # products/
     # path('<int:category_id>',views.CategoryProductList.as_view(), name="category_products"),
@@ -74,6 +80,7 @@ urlpatterns = [
     path('collection/', include(collection_patterns)), # adding, deleting, updating, viewwing individual collections
     path('collections/', views.CollectionList.as_view(), name="collections"), # list of collections
     path('collections/<int:collection_id>',views.CollectionProductList.as_view(), name="collection_products"), # products related to collections
+    path('ajax/', include(ajax_patterns)),
     path('favorites/', views.FavoriteProductList.as_view(), name="favorite_products"),
     path('rating/<int:rating_id>/vote/<negint:score>', views.rating_vote, name="rating_vote"),
     path('question/<int:question_id>/answer', views.answer_question, name="answer_question"),

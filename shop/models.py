@@ -117,7 +117,6 @@ class Product(models.Model):
     categories = models.ManyToManyField(Category, related_name='products', help_text="Select all categories that apply.")
     price = models.FloatField()
     inventory_stock = models.IntegerField(default=0)
-    user_likes = models.ManyToManyField(User, blank=True, null=True, related_name='liked_products')
     collection = models.ForeignKey(Collection,related_name="products", blank=True, null=True, on_delete=models.SET_NULL)
     size_chart = models.FileField(
         upload_to=product_directory_path, 
@@ -471,6 +470,9 @@ class UserProfile(models.Model):
         # pylint: disable=E1101
         return f'{self.user.get_full_name()} Profile'
 
+    def get_absolute_url(self):
+        return reverse('accounts:user_profile',kwargs={'profiled_user_id': self.id})
+    
 class UserProfileForm(ModelForm):
     class Meta:
         model = UserProfile

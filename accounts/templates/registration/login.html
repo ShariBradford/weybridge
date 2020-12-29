@@ -56,10 +56,11 @@
                 {{ field }}
             {% endfor %}
 
+            <input type="hidden" name="next" value="{{ next }}">
+
             <div class="d-flex justify-content-center">
                 <input type="submit" class="btn btn-info mb-2" value="Login" />
             </div>
-            <input type="hidden" name="next" value="{{ next }}">
             {# Assumes you setup the password_reset view in your URLconf #}
 
             <p class="d-flex justify-content-center"><a href="{% url 'password_reset' %}">Lost password?</a></p>        

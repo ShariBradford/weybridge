@@ -61,22 +61,14 @@ function rate(itemId){
     });
 }
 
-function favorite(itemId, url){
+function favorite(url){
     console.log('about to favorite item via ajax.');
-    $.ajax({
+    return $.ajax({
         url: url,
         method: 'POST',
         data: {
             'csrfmiddlewaretoken' : getCookie('csrftoken'),
         },
-    })
-    .done(function(data){
-        console.log('Successfully favorited item.');
-        $('div#' + itemId + ' .favorite').html(data);
-    })
-    .fail(function(error){
-        console.log("Error submitting favorite.");
-        console.log(error);
     });
 }
 
@@ -209,6 +201,26 @@ $('.content').on('change', '.new-promotion .promotion-form select[name="product"
 
         $('div.product-info').html(htmlString)
     });
+});
+
+$('.content').on('click','div.favorite a', function(e){
+    // e.preventDefault()
+    if ($(this).attr('data-ajax') == 'false') {
+        return
+        // location.href = $(this).attr('href');
+    } else {
+        $parent_div = $(this).parent()
+        favorite($(this).attr('href'))
+        .done(function(data){
+            console.log('Successfully favorited item.');
+            $parent_div.html(data);
+        })
+        .fail(function(error){
+            console.log("Error submitting favorite.");
+            console.log(error);
+        });
+    }
+    return false;
 });
 
 $('.existing-images').on('click', '.existing-image .action-button', function(e){

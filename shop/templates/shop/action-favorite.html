@@ -1,3 +1,18 @@
-<a href="{% url 'shop:unfavorite' product_id=product.id %}" title="Un-favorite">
-    <span style="color:red;"><i class="fas fa-heart"></i></span>
-</a>
+{% load static %}
+
+{% if product in favorite_products %}
+    {% url 'shop:favorite_products' as favorites_page %}
+    {% if request.path == favorites_page %}
+        <a href="{% url 'shop:unfavorite' product_id=product.id %}" data-ajax=false title="Un-favorite">
+            <span class="favorited"><i class="fas fa-heart"></i></span>
+        </a>
+    {% else %}
+        <a href="{% url 'shop:ajax_unfavorite' product_id=product.id %}" data-ajax=true title="Un-favorite">
+            <span class="favorited"><i class="fas fa-heart"></i></span>
+        </a>
+    {% endif %}
+{% else %}
+    <a href="{% url 'shop:ajax_favorite' product_id=product.id %}" data-ajax=true title="Favorite">
+        <span class="unfavorited"><i class="fas fa-heart"></i></span>
+    </a>
+{% endif %}

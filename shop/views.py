@@ -258,7 +258,7 @@ def rating_vote(request, rating_id, score):
 @login_required
 def favorite(request, product_id):
     user = request.user
-
+    next = request.GET.get('next', request.META.get('HTTP_REFERER'))
     if hasattr(user,"profile"): 
         # adding a second time is OK, it will not duplicate the relation
         user.profile.favorites.add(product_id)
@@ -266,19 +266,72 @@ def favorite(request, product_id):
 
     # user could be on any numbmer of pages when they push the favorite button
     # return the user to the same page they were on when they favorited the item
-    return redirect(request.META.get('HTTP_REFERER'))
+    return redirect(next)
 
 @login_required
 def unfavorite(request, product_id):
     user = request.user
+    next = request.GET.get('next', request.META.get('HTTP_REFERER'))
+
     if hasattr(user,"profile"):
         user.profile.favorites.remove(product_id)
         # messages.success(request,"Item unfavorited!")
  
     # user could be on any numbmer of pages when they push the favorite button
     # return the user to the same page they were on when they favorited the item
-    return redirect(request.META.get('HTTP_REFERER'))
+    return redirect(next)
  
+@login_required
+def ajax_favorite(request, product_id):
+    # print(f"Starting favorite action on product id #{product_id}")
+
+    if request.method == 'POST':
+        user = request.user
+        product = Product.objects.get(id=product_id)
+
+        if hasattr(user,"profile"): 
+            # adding a second time is OK, it will not duplicate the relation
+            user.profile.favorites.add(product_id)
+            # messages.success(request,"Item favorited!")
+
+        else:   # user has no profile
+            profile = UserProfile(user=user)
+            profile.favorites.add(product_id)
+            profile.save()
+
+        context = {
+            'product': product,
+            'favorite_products': user.profile.favorites.all(),
+        }
+
+        # print (f"Product: {context['product']}")
+        # print(f"Favorites: {context['favorite_products']}")
+        return render(request, 'shop/action-favorite.html', context)
+
+    # user could be on any numbmer of pages when they push the favorite button
+    # return the user to the same page they were on when they favorited the item
+    return redirect(request.META.get('HTTP_REFERER'))
+
+@login_required
+def ajax_unfavorite(request, product_id):
+    if request.method == 'POST':
+        user = request.user
+        product = Product.objects.get(id=product_id)
+
+        if hasattr(user,"profile"): 
+            user.profile.favorites.remove(product_id)
+            # messages.success(request,"Item favorited!")
+
+        context = {
+            'product': product,
+            'favorite_products': user.profile.favorites.all(),
+        }
+        return render(request, 'shop/action-favorite.html', context)
+
+    # user could be on any numbmer of pages when they push the favorite button
+    # return the user to the same page they were on when they favorited the item
+    return redirect(request.META.get('HTTP_REFERER'))
+
 class ProductList(ListView):
     model = Product
     paginate_by = 12
@@ -715,7 +768,6 @@ class FavoriteProductList(ProductList):
         # Add in the breadcrumbs
         context['breadcrumbs'] = get_breadcrumbs('page',None,'Favorites')
         return context
-
 
 class SaleProductList(ProductList):
     template_name = 'shop/sale_products.html'
