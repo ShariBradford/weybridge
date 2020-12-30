@@ -1,4 +1,4 @@
-<form class="ratings-form" action="/products/{{ product.id }}/rate"
+<form class="ratings-form" action="{% url 'shop:rate_product' product_id=product.id %}"
         enctype="multipart/form-data" 
         method="POST" 
         role="form" novalidate>

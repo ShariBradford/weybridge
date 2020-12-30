@@ -52,20 +52,31 @@
         <tbody>
             {% for item in cart.items.all %}
             <tr>
-                <td>
+                <td class="d-flex">
                     <img src="{{ item.product.get_default_photo_url }}" alt="{{ item.product.name }}" style="width:30px;">
-                    <a href="{% url 'shop:product_details' pk=item.product.id %}">
-                        {{ item.product.name }}
-                    </a>
+                    <span class="d-flex flex-column align-items-center ml-2">
+                        <a href="{% url 'shop:product_details' pk=item.product.id %}">{{ item.product.name }}</a>
+                        {% if item.product.is_on_sale %}
+                        <small style="color:red">{{ item.product.get_sale }}</small>
+                        {% endif %}
+                    </span>
                 </td>
-                <td>{{ item.product.get_sale_price|floatformat:2|intcomma }}</td>
+                <td>
+                    {% if item.product.is_on_sale %}
+                    <span class="d-flex flex-column align-items-start ml-2">
+                        <small class="strike-through">{{ item.product.price|floatformat:2|intcomma }}</small>
+                        <small style="color:red">{{ item.product.get_sale_price|floatformat:2|intcomma }}</small>
+                    </span>                    
+                    {% else %}
+                    {{ item.product.price|floatformat:2|intcomma }}
+                    {% endif %}
+                </td>
                 <td class="d-flex align-items-center">
                     <form method="POST" action="{% url 'cart:update_cart' product_id=item.product.id %}" class="d-flex justify-content-between align-items-center">
                         {% csrf_token %}
                         <input type="number" name="qty" min="0" max="{{ item.product.inventory_stock }}" value="{{ item.quantity }}" style="max-width:4em;min-width:4em;padding-left:3px;">
                         <button type="submit" class="btn btn-warning btn-sm">Update</button>
                     </form>
-
                     <form method="POST" action="{% url 'cart:update_cart' product_id=item.product.id %}" class="d-flex align-items-center">
                         {% csrf_token %}
                         <input type="hidden" name="qty" value=0>

@@ -108,7 +108,7 @@ def get_product_rating_for_user(user, object):
         
         upvotes = Count('votes__score_type', filter=Q(votes__score_type=1))
         downvotes = Count('votes__score_type', filter=Q(votes__score_type=-1))
-        all_ratings = object.ratings.annotate(upvotes=upvotes).annotate(downvotes=downvotes)       
+        all_ratings = object.ratings.annotate(upvotes=upvotes).annotate(downvotes=downvotes).order_by('-created_at')       
         # all_ratings = object.ratings.all()
 
     else:
@@ -575,9 +575,19 @@ class PromotionCreate(CreateView):
     model = Promotion
     form_class = PromotionForm
 
+    def get_initial(self):
+        try:
+            product_pk = self.kwargs['pk']
+            product = Product.objects.get(id=product_pk)
+            return {'product':product}
+
+        except KeyError:
+            return
+
     # def get_context_data(self, **kwargs):
     #     context = super().get_context_data(**kwargs)
-    #     # context['products'] = Product.objects.values('name','price','product_photos')
+    #     if kwargs['pk']:
+    #         context['product'] = Product.objects.get(id=kwargs['pk'])
     #     return context
 
     def form_valid(self, form):

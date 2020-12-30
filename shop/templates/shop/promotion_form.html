@@ -21,7 +21,11 @@
             method="POST" 
             role="form" novalidate>
             {% csrf_token %}
-                        
+            
+            {% for error in form.non_field_errors %}
+            <p class="alert alert-danger"><strong>{{ error }}</strong></p>
+            {% endfor%}
+
             {% for field in form.visible_fields %}
             <div class="fieldWrapper form-group"
                 data-id="{{ field.name }}" 

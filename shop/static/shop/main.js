@@ -263,4 +263,11 @@ $(function () {
     $('div.container.signup,div.container.login').find('input,textarea,select').addClass('form-control');
 });
 
-
+(function () {
+    console.log('running iife');
+    prod_info = $('.new-promotion .promotion-form select[name="product"]').val();
+    if (prod_info) {
+        console.log('Product ' + prod_info);
+        $('.content').find('.new-promotion .promotion-form select[name="product"]').trigger('change');
+    }
+})();

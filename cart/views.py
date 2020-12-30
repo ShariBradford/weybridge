@@ -63,7 +63,7 @@ def add_to_cart(request,product_id):
         # item.line_total = item.product.price * float(item.quantity)
         item.line_total = item.product.get_sale_price() * float(item.quantity)
         item.save()
-
+        
         cart.item_count += quantity
         cart.total = cart.items.aggregate(Sum('line_total'))['line_total__sum']
         cart.updated_by = request.user

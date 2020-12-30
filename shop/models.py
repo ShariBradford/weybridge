@@ -1,6 +1,6 @@
 from django.db import models
 from django import forms
-from django.forms import ModelForm
+from django.forms import ModelForm, ValidationError
 from django.contrib.auth.models import User
 from django.conf import settings
 from datetime import datetime, date, timedelta
@@ -199,6 +199,16 @@ class Product(models.Model):
     get_promotion.short_description = 'Promotion'
     get_promotion.admin_order_field = 'price'
 
+    def get_sale(self):
+        if self.is_on_sale():
+            return self.promotions.filter(
+                sale__start_date__lte=date.today(),
+                sale__end_date__gte=date.today()
+            ).order_by('-sale_price').first().sale
+        else:
+            return None
+    get_sale.short_description = 'Sale'
+
 class ProductForm(ModelForm):
     class Meta:
         model = Product
@@ -308,6 +318,13 @@ class PromotionForm(ModelForm):
             'start_date' : forms.TextInput(attrs={'class':'form-control'}),
             'end_date' : forms.TextInput(attrs={'class':'form-control'}),
        }
+
+    def clean(self):
+        super(PromotionForm,self).clean()
+        product = self.cleaned_data['product']
+        if self.cleaned_data['sale_price'] > product.price:
+            raise ValidationError("Sale price should be less than retail price.")
+ 
 
 class Rating(models.Model):
     RATING_CHOICES = (

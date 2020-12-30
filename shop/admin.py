@@ -5,7 +5,6 @@ from .models import *
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     fields = ('name', 'description', ('sku', 'inventory_stock'), 'categories', ('price', 'is_on_sale', 'get_sale_price'), 'collection','size_chart','active', 'get_default_photo_url')
-    # fields = ('name', 'description', ('sku','inventory_stock'), 'price', 'categories', 'collection','size_chart','active')
     date_hierarchy = 'created_at'
     filter_horizontal = ('categories',)
     readonly_fields = ('created_by','created_at','updated_by','updated_at', 'is_on_sale', 'get_sale_price', 'get_default_photo_url')

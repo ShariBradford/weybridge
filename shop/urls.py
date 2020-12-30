@@ -24,6 +24,7 @@ product_patterns = [
     path('<int:pk>/', views.ProductDetail.as_view(), name="product_details"),
     path('<int:pk>/update/', views.ProductUpdate.as_view(), name="product_update"),
     path('<int:pk>/delete/', views.ProductDelete.as_view(), name="product_delete"),
+    path('<int:pk>/promotion/', views.PromotionCreate.as_view(), name="product_sale"),
     path('<int:product_id>/rate/', views.rate_product, name="rate_product"),
     path('<int:product_id>/question/', views.question_product, name="question_product"),
     path('<int:product_id>/favorite/', views.favorite, name="favorite"),
