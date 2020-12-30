@@ -1,5 +1,5 @@
 {% extends 'shop/base.html' %}
-{% load static humanize %}
+{% load static %}
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'shop/css/product.css' %}">
@@ -32,20 +32,22 @@
 {% endblock login %}
 
 {% block content %}
-<div class="container" data-id="{{ category.id }}">
+<div class="container" data-id="{{ backlog.id }}">
+    {% include 'shop/breadcrumbs.html' %}
+
     <div class="dish-header d-flex flex-column align-items-center">
 
         <div class="dish-title d-inline-flex align-items-baseline">
-            <h1 class="my-0">Promotion</h1>
+            <h1 class="my-0">{{ backlog.title }}</h1>
             {% if request.user.is_staff %}
             <p class="edit-category ml-2 my-0" title="Edit" style="color:#009EC3">
-                <a href="{% url 'shop:promotion_update' pk=promotion.id %}">
+                <a href="{% url 'backlog:backlog_update' pk=backlog.id %}">
                     <small><i class="fas fa-pen"></i> Edit</small>
                 </a>
             </p>
 
             <p class="delete-category ml-2 my-0" title="Delete" style="color:red">
-                <a href="{% url 'shop:promotion_delete' pk=promotion.id %}">
+                <a href="{% url 'backlog:backlog_delete' pk=backlog.id %}">
                     <small><i class="fas fa-times" style="color:red"></i> Delete</small>
                 </a>
             </p>
@@ -56,26 +58,27 @@
     <div class="row">
 
         <div class="col-8">
-            <div class="description">Product: <a href="{% url 'shop:product_details' pk=promotion.product.id %}">{{ promotion.product.name }}</a></div><!-- end .description -->
-            <div class="retail-price">Retail Price: ${{ promotion.product.price|floatformat:2|intcomma }}</div><!-- end .retail-price -->
-            <div class="sale-price">Sale Price: ${{ promotion.sale_price|floatformat:2|intcomma }}</div><!-- end .sale-price -->
-            <div class="sale">Sale: <a href="{% url 'shop:sale_details' pk=promotion.sale.id %}">{{ promotion.sale.name }}</a></div><!-- end .sale -->
-            <div class="start-date">Start Date: {{ promotion.sale.start_date }}</div><!-- end .start-date -->
-            <div class="end-date">End Date: {{ promotion.sale.end_date }}</div><!-- end .end-date -->
-            {% if promotion.sale.has_ended %}<div style="font-weight: bold;font-style: italic;color:red;">This promotion has ended</div>{% endif %}
+            <div class="app-name">App: {{ backlog.app_name }}</div><!-- end .description -->
+            <div class="model-name">Model: {{ backlog.model_name }}</div><!-- end .retail-price -->
+            <div class="category">Category: {{ backlog.get_category_display }}</div><!-- end .sale-price -->
+            <div class="description">Description: 
+                <div>{{ backlog.description|linebreaks }}</div>
+            </div><!-- end .description -->
+            <div class="priority">Priority: {{ backlog.get_priority_display }}</div><!-- end .sale -->
+            <div class="status">Status: {{ backlog.get_status_display }}</div><!-- end .start-date -->
         </div><!-- end .col-8 -->
-
+    
         <div class="col-4">
             <div id="categories">
                 <!--Insert link tag to be able to take to similar category pages-->
-                <img src="{{ promotion.product.get_default_photo_url }}" alt="{{ promotion.product.name }}" style="width:100%">
+                <p>About this item:</p>
             </div><!-- end #categories-->
         </div><!-- end .col-4 -->
     </div><!-- end .row -->
 
     <div class="row">
         {% if request.user.is_staff %}
-        <p style="font-style: italic;"><small>Created by {{ promotion.created_by.get_full_name }} on {{ promotion.created_at }} Updated by {{ promotion.updated_by.get_full_name }} on {{ promotion.updated_at }}.</small></p>
+        <p style="font-style: italic;"><small>Created by {{ backlog.created_by.get_full_name }} on {{ backlog.created_at }} Updated by {{ backlog.updated_by.get_full_name }} on {{ backlog.updated_at }}</small></p>
         {% endif %}
     </div>
 

@@ -1,0 +1,73 @@
+{% extends 'shop/base.html' %}
+{% load static humanize shop_extras %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'shop/css/dashboard.css' %}">
+{% endblock css %}
+
+{% block greeting %}{% if user.is_authenticated %} {{ user.first_name }}{% else %}{% endif %}{% endblock greeting %}
+
+{% block favorites %}
+{% if user.is_authenticated %}
+<a href="{% url 'shop:favorite_products' %}" class="nav-link"><i class="fas fa-bookmark"></i>Favorites</a>
+{% else %}
+{% endif %}
+{% endblock favorites %}
+
+{% block profile %}
+{% if user.is_authenticated %}
+<a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+    class="fas fa-user-cog"></i>Profile</a>
+{% else %}
+<a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fas fa-user-cog"></i>Register</a>
+{% endif %}
+{% endblock profile %}
+
+{% block login %}
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i>Logout</a>
+{% else %}
+<a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i>Login</a>
+{% endif %}
+{% endblock login %}
+
+
+
+{% block content %}
+{% include 'shop/breadcrumbs.html' %}
+
+<div class="container">
+    <div class="my-4">
+        {% if request.user.is_staff %}
+        <a href="{% url 'backlog:backlog_add' %}" class="btn btn-info"><small><i class="fas fa-plus-circle"></i> New</small></a> 
+        {% endif %}
+    </div>
+
+    <table class="table">
+        <thead>
+            <th>App</th>
+            <th>Model</th>
+            <th>Category</th>
+            <th>Title</th>
+            <th>Priority</th>
+            <th>Status</th>
+        </thead>
+        <tbody>
+            {% for item in object_list %}
+            <tr>
+                <td>{{ item.app_name }}</td>
+                <td>{{ item.model_name }}</td>
+                <td>{{ item.get_category_display }}</td>
+                <td>
+                    <a href="{% url 'backlog:backlog_details' pk=item.id %}">
+                        {{ item.title }}
+                    </a>
+                </td>
+                <td>{{ item.get_priority_display }}</td>
+                <td>{{ item.get_status_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock%}
