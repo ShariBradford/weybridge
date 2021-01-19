@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import *
+from django.contrib.admin import RelatedOnlyFieldListFilter
 
 # admin.site.register(Product)
 @admin.register(Product)
@@ -21,7 +22,7 @@ class ProductAdmin(admin.ModelAdmin):
             obj.created_by = request.user
             obj.updated_by = request.user
 
-        super(ProductAdmin,self).save_model(request, obj, form, change)
+        super().save_model(request, obj, form, change)
 
         # add the default photo
         if not hasattr(object,"product_photos"):
@@ -46,17 +47,28 @@ class SaleAdmin(admin.ModelAdmin):
             obj.created_by = request.user
             obj.updated_by = request.user
 
-        super(PromotionAdmin,self).save_model(request, obj, form, change)
+        super().save_model(request, obj, form, change)
 
 @admin.register(Promotion)
 class PromotionAdmin(admin.ModelAdmin):
     date_hierarchy = 'start_date'
     readonly_fields = ('get_retail_price','created_by','created_at','updated_by','updated_at')
     search_fields = ('product',)
-    list_display = ('product', 'sale_price', 'get_retail_price', 'start_date', 'end_date')
+    list_display = ('product', 'sale', 'sale_price', 'get_retail_price', 'start_date', 'end_date')
     autocomplete_fields = ('product',)
-    fields = ('product', ('sale_price', 'get_retail_price'), ('start_date', 'end_date'), ('created_by','created_at'), ('updated_by','updated_at'))
-    list_filter = ('start_date', 'end_date')
+    # fields = ('product', ('sale_price', 'get_retail_price'), ('start_date', 'end_date'), ('created_by','created_at'), ('updated_by','updated_at'))
+    list_filter = ('sale__start_date', 'sale__end_date', ('sale', RelatedOnlyFieldListFilter)) # Note from docs: The FieldListFilter API is considered internal and might be changed
+
+    fieldsets = (
+        (None, {'fields': ('product',) }),
+        ('Sale Info', {
+            'fields': ('sale', ('sale_price', 'get_retail_price')),
+        }),
+        ('History', {
+            'fields': (('created_by','created_at'), ('updated_by','updated_at')),
+        }),
+    )
+
 
     def save_model(self, request, obj, form, change):
         if change:
@@ -67,7 +79,7 @@ class PromotionAdmin(admin.ModelAdmin):
             obj.created_by = request.user
             obj.updated_by = request.user
 
-        super(PromotionAdmin,self).save_model(request, obj, form, change)
+        super().save_model(request, obj, form, change)
 
 # admin.site.register(Rating)
 @admin.register(Rating)

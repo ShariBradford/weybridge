@@ -48,16 +48,18 @@
     <table class="table">
         <thead>
             <th>Sale</th>
-            <th>Product</th>
+            <th>Promotion</th>
             <th>Retail Price</th>
             <th>Sale Price</th>
-            <th>Start Date</th>
-            <th>End Date</th>
+            <th>Actions</th>
         </thead>
         <tbody>
             {% for promotion in object_list %}
             <tr>
-                <td>{{ promotion.sale.name }}</td>
+                <td>
+                    <div style="font-weight: bold;"><a href="{% url 'shop:sale_details' promotion.sale.id %}">{{ promotion.sale.name }}</a></div>
+                    <small class="text-muted">{{ promotion.sale.start_date }} - {{ promotion.sale.end_date }}</small>
+                </td>
                 <td>
                     <img src="{{ promotion.product.get_default_photo_url }}" alt="{{ promotion.product.name }}" style="width:30px;">
                     <a href="{% url 'shop:promotion_details' pk=promotion.id %}">
@@ -66,8 +68,20 @@
                 </td>
                 <td>${{ promotion.product.price|floatformat:2|intcomma }}</td>
                 <td>${{ promotion.sale_price|floatformat:2|intcomma }}</td>
-                <td>{{ promotion.sale.start_date }}</td>
-                <td>{{ promotion.sale.end_date }}</td>
+                <td>
+                    <ul class="actions">
+                        <li>
+                            <a href="{% url 'shop:promotion_update' pk=promotion.id %}">
+                                <small><i class="fas fa-pen"></i>Edit</small>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'shop:promotion_delete' pk=promotion.id %}">
+                                <small><i class="fas fa-times" style="color:red"></i>Delete</small>
+                            </a>
+                        </li>
+                    </ul>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

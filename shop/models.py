@@ -115,7 +115,7 @@ class Product(models.Model):
     description = models.TextField(blank=True, default="Description coming soon!", help_text="Describe the product, its history and why you were inspired to make it.")
     sku = models.CharField(max_length=50)
     categories = models.ManyToManyField(Category, related_name='products', help_text="Select all categories that apply.")
-    price = models.FloatField()
+    price = models.DecimalField(max_digits=10,decimal_places=2)
     inventory_stock = models.IntegerField(default=0)
     collection = models.ForeignKey(Collection,related_name="products", blank=True, null=True, on_delete=models.SET_NULL)
     size_chart = models.FileField(
@@ -289,7 +289,7 @@ class Promotion(models.Model):
     name = models.CharField(max_length=255, default='Sale')
     sale = models.ForeignKey(Sale, related_name='promotions', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, related_name='promotions', on_delete=models.CASCADE)
-    sale_price = models.FloatField()
+    sale_price = models.DecimalField(max_digits=10,decimal_places=2)
     start_date = models.DateField(null=True,blank=True, default=date.today)
     end_date = models.DateField(null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -310,21 +310,36 @@ class Promotion(models.Model):
 class PromotionForm(ModelForm):
     class Meta:
         model = Promotion
-        fields = ['sale', 'product', 'sale_price', 'start_date', 'end_date']
+        fields = ['product', 'sale', 'sale_price']
         widgets = {
             'sale' : forms.Select(attrs={'class':'form-control'}),
             'product' : forms.Select(attrs={'class':'form-control'}),
             'sale_price' : forms.TextInput(attrs={'class':'form-control'}),
-            'start_date' : forms.TextInput(attrs={'class':'form-control'}),
-            'end_date' : forms.TextInput(attrs={'class':'form-control'}),
-       }
+        }
 
     def clean(self):
         super(PromotionForm,self).clean()
-        product = self.cleaned_data['product']
-        if self.cleaned_data['sale_price'] > product.price:
-            raise ValidationError("Sale price should be less than retail price.")
- 
+        # errors_dict = {}
+        if 'product' in self.cleaned_data:
+            product = self.cleaned_data['product']
+        else: 
+            product = None
+
+        if 'sale' in self.cleaned_data:
+            sale = self.cleaned_data['sale']
+        else: 
+            sale = None
+
+        if product and self.cleaned_data['sale_price'] > product.price:
+            # errors_dict['sale_price'] = ValidationError("Sale price should be less than retail price.")
+            self.add_error('sale_price', "Sale price should be less than retail price.")
+
+        # if this is a new item or if user is updating sale selected, make sure it's not a duplicate of another promotion
+        if sale and product:
+            if self.instance.pk == None or (product != self.instance.product) or (sale != self.instance.sale):            
+                if sale.promotions.filter(product_id=product).exists():
+                    # errors_dict['NON_FIELD_ERRORS'] = ValidationError(f"A promotion with this product is already part of the sale '{sale.name}'. Select another sale or another product.")
+                    self.add_error(None, f"A promotion with this product is already part of the sale '{sale.name}'. Select another sale or another product.")
 
 class Rating(models.Model):
     RATING_CHOICES = (

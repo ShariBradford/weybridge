@@ -147,8 +147,8 @@
                         {% endfor%}
                     </ul>    
                 </p>
-                <p>SKU: {{ product.sku }}</p>
-                <p>Quantity in Stock: {% if product.inventory_stock %}{{ product.inventory_stock }}{% else %}<span style="color:red;">SOLD OUT</span>{% endif %}</p>
+                <p>SKU: <small class="text-muted">{{ product.sku }}</small></p>
+                <p>{% if product.inventory_stock %}In Stock.{% else %}<span style="color:red;">SOLD OUT</span>{% endif %}</p>
             </div><!-- end #categories -->
 
             <div class="description">Description: 
@@ -159,9 +159,22 @@
 
     <div class="row">
         {% if request.user.is_staff %}
-        <p style="font-style: italic;"><small>Created by {{ product.created_by.first_name }} {{ product.created_by.last_name }} on {{ product.created_at }} Updated by {{ product.updated_by.first_name }} {{ product.updated_by.last_name }} on {{ product.updated_at }}</small></p>
+        <p style="font-style: italic;"><small>Created by {{ product.created_by.get_full_name }} {{ product.created_at|timesince }} ago. Updated by {{ product.updated_by.get_full_name }} {{ product.updated_at|timesince }} ago.</small></p>
         {% endif %}
     </div>
+
+    {% if recently_viewed_items %}
+    <div class="recently-viewed" style="margin-top: 40px;">
+        <h3 class="my-0">Take another look:</h3>
+        <small class="text-muted my-0">Your recently viewed items</small>
+        {% include 'shop/products.html' with object_list=recently_viewed_items %}
+        <!-- <div class="d-flex justify-content-start align-items-center">
+            {% for item in recently_viewed_items %}
+            <img src="{{ item.get_default_photo_url }}" class="mx-2" style="width:80px;" data-id="{{ item.id }}" alt="{{ item.name }} image">
+            {% endfor %}
+        </div> -->
+    </div>
+    {% endif %}
 
     <div class="row">
         <div class="ratings-info col-7">

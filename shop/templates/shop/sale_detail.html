@@ -75,6 +75,7 @@
                 <p>About this category:</p>
                 <div class="start-date">Start Date: {{ sale.start_date }}</div><!-- end .start-date -->
                 <div class="end-date">End Date: {{ sale.end_date }}</div><!-- end .end-date -->
+                {% if sale.has_ended %}<div style="font-weight: bold;font-style: italic;color:red;">This sale has ended</div>{% endif %}
             </div><!-- end #categories-->
         </div><!-- end .col-4 -->
     </div><!-- end .row -->
@@ -82,7 +83,7 @@
     <div class="row">
         <table class="table">
             <thead>
-                <th>Product</th>
+                <th>Promotion</th>
                 <th>Retail Price</th>
                 <th>Sale Price</th>
             </thead>

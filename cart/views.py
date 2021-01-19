@@ -29,6 +29,17 @@ def view_cart(request):
     try:
         cart_id = request.session['cart_id']
         cart = Cart.objects.get(id=cart_id)
+        cart.refresh_cart(request.user)
+
+        # # refresh cart items (e.g., if an item has gone on sale since adding to cart., the line total will need to be updated)
+        # for item in cart.items.all():
+        #     item.line_total = item.product.get_sale_price() * item.quantity
+        #     item.save()
+            
+        # cart.total = cart.items.aggregate(Sum('line_total'))['line_total__sum']
+        # cart.updated_by = request.user
+        # cart.save()    
+        
         context = {
             'cart': cart,
         }
@@ -119,8 +130,8 @@ def remove_from_cart(request,product_id):
         return redirect('/')
 
 def update_cart(request,product_id):
-    # similar to add_to_cart(). however, this just updates quantity to whatever is in 
-    # request.GET['qty']
+    # similar to add_to_cart(). however, this just updates quantity 
+    # to whatever is in request.GET['qty']
     if request.method == "POST":
         quantity = request.POST.get('qty',1)
 

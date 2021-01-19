@@ -40,6 +40,7 @@ sale_patterns = [
     path('<int:pk>/', views.SaleDetail.as_view(), name="sale_details"),
     path('<int:pk>/update/', views.SaleUpdate.as_view(), name="sale_update"),
     path('<int:pk>/delete/', views.SaleDelete.as_view(), name="sale_delete"),
+    path('<int:sale_id>/getinfo/', views.get_sale_info, name="get_sale_info"),
 ]
 
 promotion_patterns = [
@@ -86,4 +87,5 @@ urlpatterns = [
     path('rating/<int:rating_id>/vote/<negint:score>', views.rating_vote, name="rating_vote"),
     path('question/<int:question_id>/answer', views.answer_question, name="answer_question"),
     path('test/', views.test, name="test"),
+    path('test/recent/clear/', views.clear_recent, name="clear_recent"),
 ]

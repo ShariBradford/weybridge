@@ -1,9 +1,11 @@
-from django.db import models
-from shop.models import Product
 from django import forms
-from django.forms import ModelForm
 from django.contrib.auth.models import User
+from django.db import models
+from django.db.models import Sum
+from django.forms import ModelForm
 from django.shortcuts import reverse
+
+from shop.models import Product
 
 class Cart(models.Model):
     STATUS_OPEN = 1
@@ -33,6 +35,24 @@ class Cart(models.Model):
 
     def get_absolute_url(self):
         return reverse('cart:cart_details')
+
+    def refresh_cart(self,user):
+        """
+            Refresh cart items (e.g., if an item has gone on sale since adding to cart, 
+            the line total will need to be updated).
+        """
+        updated = False
+
+        for item in self.items.all():
+            if item.line_total != item.product.get_sale_price() * item.quantity:
+                item.line_total = item.product.get_sale_price() * item.quantity
+                item.save()
+                updated = True
+
+        if updated:
+            self.total = self.items.aggregate(Sum('line_total'))['line_total__sum']
+            self.updated_by = user
+            self.save()    
 
 class CartItem(models.Model):
     product = models.ForeignKey(Product,related_name="item", on_delete=models.CASCADE)

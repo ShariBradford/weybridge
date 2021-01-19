@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from django.db.models import Avg, F, Q, Count, FilteredRelation, Value, IntegerField, CharField
+from django.db.models import Avg, F, Q, Count, FilteredRelation, Value, IntegerField, CharField, Case, When
 from ipware import get_client_ip
 from datetime import datetime
 from django.contrib.auth.models import User
@@ -15,6 +15,7 @@ from django.core import serializers
 
 category_qs = Category.objects.all()
 throw_away_var = len(category_qs)   #force evaluation of queryset
+recently_viewed_max = 4 # number of recently viewed products to store in session
 
 def test(request):
     return render(request, 'shop/test.html', {'test': 'Testing 123'})
@@ -346,7 +347,7 @@ class ProductList(ListView):
         query_sort = self.request.GET.get('sort_by', 'mostPopular')
         # print(f"Sort by: {query_sort}")
         if query_sort:
-            print(f"Sort by {query_sort}")
+            # print(f"Sort by {query_sort}")
 
             if query_sort == "priceLowToHigh":
                 return 'price'
@@ -413,6 +414,42 @@ class ProductDetail(DetailView):
         # print(f'User Rating: {context["user_rating_this_item"].number_of_stars or None}')   
 
         context['breadcrumbs'] = get_breadcrumbs('product',self.object.id)
+
+        # Don't show the current item in recently viewed.
+        # Put the recently_viewed items in the context before adding the current item to recently_viewed.
+        obj = self.object
+        try:
+            recently_viewed = self.request.session['recently_viewed']
+            # print(f"Recent: {Product.objects.filter(id__in = recently_viewed)}")
+            
+            # specify the order of the queryset according to the recently_viewed array
+            list_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(recently_viewed)])
+            # reference 'django models conditional expressions' for info on Case and When
+
+            # print(f"List Order: {list_order}")
+
+            # if the item is already in the list, remove it.
+            if obj.id in recently_viewed:
+                # print(f'This object ({obj.id}) already in recently viewed items ({recently_viewed})')
+                recently_viewed.remove(obj.id)
+                # print(f"Recent (after removing current item): {Product.objects.filter(id__in = recently_viewed)}")
+                context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)
+            elif len(recently_viewed) > recently_viewed_max:
+                # print(f'Too many items in recently viewed items ({len(recently_viewed)})')
+                # check if recently_viewed has equal to or more than the maximum number of items
+                # if so, delete the last one 
+                context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)
+                del recently_viewed[-1]
+                # print(f"Recent (after resizing list): {Product.objects.filter(id__in = recently_viewed)}")            
+
+            # insert this item at the front of the recently_viewed list
+            recently_viewed.insert(0,obj.id)
+            # print(f"Recently viewed items (after adding current item): {recently_viewed}") # {Product.objects.filter(id__in = recently_viewed)}")
+
+        except KeyError:
+            recently_viewed = [obj.id]
+            
+        self.request.session['recently_viewed'] = recently_viewed
 
         return context
 
@@ -561,6 +598,7 @@ class SaleDelete(DeleteView):
 
 class PromotionList(ListView):
     model = Promotion
+    ordering = ['-sale__start_date', 'product__name']
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -574,6 +612,7 @@ class PromotionDetail(DetailView):
 class PromotionCreate(CreateView):
     model = Promotion
     form_class = PromotionForm
+    success_url = reverse_lazy('shop:promotions')
 
     def get_initial(self):
         try:
@@ -598,6 +637,7 @@ class PromotionCreate(CreateView):
 class PromotionUpdate(UpdateView):
     model = Promotion
     form_class = PromotionForm
+    success_url = reverse_lazy('shop:promotions')
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -883,3 +923,21 @@ def get_product_info(request, product_id):
         }
         return JsonResponse(data)
     return HttpResponseNotAllowed(['POST'])
+
+def get_sale_info(request, sale_id):
+    if request.method == 'POST':
+        sale = Sale.objects.get(id=sale_id)
+        data = {
+            'description': sale.description,
+            'id': sale.id,
+            'start_date': sale.start_date,
+            'end_date': sale.end_date,
+            'has_ended': sale.has_ended(),
+        }
+        return JsonResponse(data)
+    return HttpResponseNotAllowed(['POST'])
+
+def clear_recent(request):
+    request.session['recently_viewed'] = []
+    print(f"Recently viewed items: {request.session['recently_viewed']}")
+    return redirect('/')

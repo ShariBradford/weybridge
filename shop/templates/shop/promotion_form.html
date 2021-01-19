@@ -15,7 +15,7 @@
     </div>
     <div class="product-info d-flex justify-content-center align-items-center my-2"></div>
     <div class="content">
-        <form action=""
+        <form action="."
             class="promotion-form"
             enctype="multipart/form-data" 
             method="POST" 
@@ -37,6 +37,9 @@
                             
                 {{ field.label_tag }}{% if field.field.required %}<span class="required">*</span>{% endif %}
                 {{ field }}
+                {% if field.name == 'sale' %}
+                <div class="sale-info form-text"></div>
+                {% endif %}
                 {% if field.help_text %}
                 <small id="help_for_{{ field.name }}" class="form-text text-muted">{{ field.help_text|safe }}</small>
                 {% endif %}

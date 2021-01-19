@@ -7,7 +7,7 @@ class CartAdmin(admin.ModelAdmin):
     search_fields = ('user__first_name','user__last_name')
     readonly_fields = ('created_by','updated_by','created_at','updated_at')
     list_display = ('user', 'item_count', 'total', 'status', 'active', 'updated_at', 'id')
-    fields = ('user', ('item_count', 'total'), ('status', 'active'), ('created_at','created_by'),('updated_by','updated_at'))
+    fields = ('user', ('item_count', 'total'), ('status', 'active'), ('created_by','created_at'),('updated_by','updated_at'))
     ordering = ('-updated_at',)
     list_filter = ('updated_at','status', 'active')
 

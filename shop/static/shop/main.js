@@ -129,6 +129,27 @@ function getProductInfo(product_id){
     return call;
 }
 
+function getSaleInfo(sale_id){
+    console.log('about to obtain sale info via ajax.');
+    var call = $.ajax({
+        url: '/sale/' + sale_id + '/getinfo/',
+        method: 'POST',
+        data: {
+            'csrfmiddlewaretoken' : $('input[name="csrfmiddlewaretoken"]').val(), // getCookie('csrftoken'),
+        },
+    })
+    .done(function(data){
+        console.log('Sale info for sale id ' + sale_id + ':');
+        console.log(data);
+    })
+    .fail(function(error){
+        console.log("Error submitting comment.");
+        console.log(error);
+    });
+
+    return call;
+}
+
 $('.ratings-form input[type="submit"]').on('click', function(e){
     e.preventDefault();
     var itemId = $(this).closest('.container').attr('data-id');
@@ -203,6 +224,28 @@ $('.content').on('change', '.new-promotion .promotion-form select[name="product"
     });
 });
 
+$('.content').on('change', '.new-promotion .promotion-form select[name="sale"]', function(e){
+    console.log('Sale dropdown changed.')
+    var sale_id = $(this).val();
+    getSaleInfo(sale_id).done(function(data){
+        console.log('got sale info!');
+        var htmlString = '<div>';
+        htmlString += '<small class="text-muted ml-2 mt-0 mb-3">';
+        htmlString += data.description;
+        htmlString += '   &bull;   ';
+        htmlString += 'Start: ' + data.start_date;
+        htmlString += '   &bull;   ';
+        htmlString += 'End: ' + data.end_date;
+        if (data.has_ended) {
+            htmlString += '   &bull;   ';
+            htmlString += '<span style="color:red">Sale Ended</span>';
+        }
+        htmlString += '</small></div>'
+
+        $('div.sale-info').html(htmlString)
+    });
+});
+
 $('.content').on('click','div.favorite a', function(e){
     // e.preventDefault()
     if ($(this).attr('data-ajax') == 'false') {
@@ -269,5 +312,11 @@ $(function () {
     if (prod_info) {
         console.log('Product ' + prod_info);
         $('.content').find('.new-promotion .promotion-form select[name="product"]').trigger('change');
+    }
+
+    sale_info = $('.new-promotion .promotion-form select[name="sale"]').val();
+    if (sale_info) {
+        console.log('Sale ' + sale_info);
+        $('.content').find('.new-promotion .promotion-form select[name="sale"]').trigger('change');
     }
 })();
