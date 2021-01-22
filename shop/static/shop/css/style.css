@@ -234,6 +234,7 @@ img.course-type {
 }
 
 ul.actions {
+    list-style-type: none;
     margin: 0;
     padding: 0;
 }
@@ -244,13 +245,30 @@ ul.actions li {
 }
 
 ul.actions li::after {
-    content: ' | ';
+    content: '|';
     margin-left: 2px;
     margin-right: 2px;
 }
 
 ul.actions li:last-child::after {
     content: '';
+}
+
+ul.actions li a {
+    color: gray;
+}
+
+ul.actions li a:visited {
+    color: gray;
+}
+
+ul.actions li a:hover {
+    color: blue;
+    text-decoration: none;
+}
+
+ul.actions li a:active {
+    color: blue;
 }
 
 ul.actions .fas {
@@ -434,3 +452,9 @@ ul#id_number_of_stars li input:checked {
 .strike-through {
     text-decoration: line-through;
 }
+
+.products .new-item {
+    display: flex;
+    justify-content: space-between;
+}
+

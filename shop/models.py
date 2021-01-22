@@ -199,15 +199,28 @@ class Product(models.Model):
     get_promotion.short_description = 'Promotion'
     get_promotion.admin_order_field = 'price'
 
-    def get_sale(self):
+    def get_sale(self, include_description=False, include_promo_code=False):
+        return_val = None
+
         if self.is_on_sale():
-            return self.promotions.filter(
-                sale__start_date__lte=date.today(),
-                sale__end_date__gte=date.today()
-            ).order_by('-sale_price').first().sale
-        else:
-            return None
+            # sale = self.promotions.filter(
+            #     sale__start_date__lte=date.today(),
+            #     sale__end_date__gte=date.today()
+            # ).order_by('-sale_price').first().sale
+            promotion = self.get_promotion()
+            if promotion:
+                sale = promotion.sale
+                return_val = sale
+
+                if include_description and sale.description:
+                    return_val = f"{sale.name}: {sale.description}"
+
+                if include_promo_code and sale.promo_code:
+                    return_val = f"{return_val} (with promo code {sale.promo_code.upper()})" 
+
+        return return_val
     get_sale.short_description = 'Sale'
+    get_sale.admin_order_field = 'name'
 
 class ProductForm(ModelForm):
     class Meta:
@@ -249,6 +262,7 @@ class Sale(models.Model):
     start_date = models.DateField(null=True,blank=True, default=date.today)
     end_date = models.DateField(null=True,blank=True)
     description = models.CharField(max_length=255, blank=True, null=True, default='Description coming soon!')
+    promo_code = models.CharField(max_length=20, null=True, blank=True, help_text="Try to keep the code short (under 10 characters).")
     terms = models.TextField(blank=True, null=True, default='Terms coming soon.')
     profile_pic = models.ImageField( 
         upload_to=sale_directory_path, 
@@ -272,13 +286,27 @@ class Sale(models.Model):
     has_ended.boolean = True
     has_ended.short_description = 'Ended?'
 
+    def get_info(self, include_description=False, include_promo_code=False):
+        return_val = self.name
+
+        if include_description and self.description:
+            return_val = f"{self.name}: {self.description}"
+
+        if include_promo_code and self.promo_code:
+            return_val = f"{return_val} (with promo code {self.promo_code.upper()})" 
+
+        return return_val
+    get_info.short_description = 'Sale Info'
+    get_info.admin_order_field = 'name'
+    
 class SaleForm(ModelForm):
     class Meta:
         model = Sale
-        fields = ['profile_pic', 'name', 'description', 'terms', 'start_date', 'end_date']
+        fields = ['profile_pic', 'name', 'promo_code', 'description', 'terms', 'start_date', 'end_date']
         widgets = {
             'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file',}),
             'name' : forms.TextInput(attrs={'class':'form-control'}),
+            'promo_code' : forms.TextInput(attrs={'class':'form-control'}),
             'description': forms.TextInput(attrs={'class': 'form-control'}),
             'terms': forms.Textarea(attrs={'class': 'form-control'}),
             'start_date' : forms.TextInput(attrs={'class':'form-control'}),
@@ -356,7 +384,7 @@ class Rating(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         verbose_name = 'Rating',
     )
-    review = models.CharField(max_length=255, null=True, blank=True)
+    review = models.CharField(max_length=255, null=True, blank=True, help_text="Let other shoppers know what you liked, or didn't, about this purchase.")
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
     updated_by = models.ForeignKey(User,related_name="ratings_updated", on_delete=models.CASCADE)

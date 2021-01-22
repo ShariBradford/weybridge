@@ -31,11 +31,11 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    fields = ('name', 'description', 'terms', ('start_date', 'end_date'), 'profile_pic', ('created_by','created_at'), ('updated_by','updated_at'))
+    fields = ('name', 'promo_code', 'description', 'terms', ('start_date', 'end_date'), 'profile_pic', ('created_by','created_at'), ('updated_by','updated_at'))
     date_hierarchy = 'start_date'
     readonly_fields = ('created_by','created_at','updated_by','updated_at')
-    search_fields = ('name','description')
-    list_display = ('name', 'profile_pic','start_date', 'end_date')
+    search_fields = ('name','promo_code', 'description')
+    list_display = ('name', 'profile_pic','promo_code', 'start_date', 'end_date')
     list_filter = ('start_date', 'end_date')
 
     def save_model(self, request, obj, form, change):

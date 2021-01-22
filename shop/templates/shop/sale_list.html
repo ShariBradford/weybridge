@@ -48,8 +48,10 @@
     <table class="table">
         <thead>
             <th>Sale</th>
+            <th>Promo Code</th>
             <th>Start Date</th>
             <th>End Date</th>
+            <th>Actions</th>
         </thead>
         <tbody>
             {% for sale in object_list %}
@@ -60,8 +62,23 @@
                         {{ sale.name }}
                     </a>
                 </td>
+                <td>{{ sale.promo_code }}</td>
                 <td>{{ sale.start_date }}</td>
                 <td>{{ sale.end_date }}</td>
+                <td>
+                    <ul class="actions">
+                        <li>
+                            <a href="{% url 'shop:sale_update' pk=sale.id %}">
+                                <small><i class="fas fa-pen"></i>Edit</small>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'shop:sale_delete' pk=sale.id %}">
+                                <small><i class="fas fa-times" style="color:red"></i>Delete</small>
+                            </a>
+                        </li>
+                    </ul>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

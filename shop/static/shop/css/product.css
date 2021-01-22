@@ -38,3 +38,6 @@
     content:'';
 }
 
+.recently-viewed .products .new-item {
+    display:none;
+}

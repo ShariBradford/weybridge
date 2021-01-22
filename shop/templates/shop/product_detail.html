@@ -51,9 +51,23 @@
 
         <div class="col-5 detail-info  mt-0 mb-2">
             <div class="title d-flex flex-column justify-content-start">
-                <h1 class="my-0">{{ product.name }}</h1>
+                <h2 class="my-0">{{ product.name }}</h2>
                 {% if request.user.is_staff %}
-                <div class="actions d-flex justify-content-center align-items-center">
+                <ul class="actions d-flex justify-content-start align-items-center">
+                    <li class="edit-category ml-2 my-0" title="Edit" style="color:#009EC3">
+                        <a href="{% url 'shop:product_update' pk=product.id %}">
+                            <small>Edit</small></a>
+                    </li>
+                    <li class="create-sale ml-2 my-0" title="Create Sale" style="color:#009EC3">
+                        <a href="{% url 'shop:product_sale' pk=product.id %}"><small>Sale</small></a>
+                    </li>
+                    <li class="delete-category ml-2 my-0" title="Delete" style="color:red">
+                        <a href="{% url 'shop:product_delete' pk=product.id %}"><small>Delete</small></a>
+                    </li>
+                </ul>
+                
+                <!--
+                <div class="actions d-flex justify-content-start align-items-center">
                     <p class="edit-category ml-2 my-0" title="Edit" style="color:#009EC3">
                         <a href="{% url 'shop:product_update' pk=product.id %}">
                             <small><i class="fas fa-pen"></i> Edit</small>
@@ -72,6 +86,7 @@
                         </a>
                     </p>
                 </div>
+                 -->
                 {% endif %}
             </div>
 
@@ -149,6 +164,10 @@
                 </p>
                 <p>SKU: <small class="text-muted">{{ product.sku }}</small></p>
                 <p>{% if product.inventory_stock %}In Stock.{% else %}<span style="color:red;">SOLD OUT</span>{% endif %}</p>
+                <p class="my-2">
+                    <span class="rating-number" data-rating="{{average_rating|stringformat:'.2F'}}" data-rating-size="medium"></span> 
+                    <a href="#ratings">Reviews</a>
+                </p>
             </div><!-- end #categories -->
 
             <div class="description">Description: 
@@ -179,7 +198,7 @@
     <div class="row">
         <div class="ratings-info col-7">
             <div class="d-inline-flex justify-content-start align-items-center">
-                <h4 class="my-0">Average Rating: <span class="rating-number" data-rating="{{average_rating|stringformat:'.2F'}}" data-rating-size="medium"></span></h4>
+                <h4 class="my-0" id="ratings">Average Rating: <span class="rating-number" data-rating="{{average_rating|stringformat:'.2F'}}" data-rating-size="medium"></span></h4>
                 
                 {% if user.is_authenticated %}
                 <div class="newDish btn btn-info ml-3 mt-3"><small><i class="fas fa-plus-circle"></i> New Rating</small></div>

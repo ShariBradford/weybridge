@@ -1,12 +1,12 @@
 {% load static humanize shop_extras %}
 <div class="container products">
-    <div class="row d-flex justify-content-between" id="newPost">
-        <div class="title">
+    <div class="new-item row"><!-- id="new-item"> -->
+        <div class="new-item-button">
           {% if request.user.is_staff %}
           <a href="{% url 'shop:product_add' %}" class="btn btn-info"><small><i class="fas fa-plus-circle"></i> New</small></a> 
           {% endif %}
         </div>
-        <div class="dropdown">
+        <div class="dropdown sort-dropdown">
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               Sort by
             </button>

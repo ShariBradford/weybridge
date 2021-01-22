@@ -72,7 +72,8 @@
         <div class="col-4">
             <div id="categories">
                 <!--Insert link tag to be able to take to similar category pages-->
-                <p>About this category:</p>
+                <p>About this sale:</p>
+                <div class="promo-code">Promo Code: {{ sale.promo_code }}</div><!-- end .promo-code -->
                 <div class="start-date">Start Date: {{ sale.start_date }}</div><!-- end .start-date -->
                 <div class="end-date">End Date: {{ sale.end_date }}</div><!-- end .end-date -->
                 {% if sale.has_ended %}<div style="font-weight: bold;font-style: italic;color:red;">This sale has ended</div>{% endif %}
