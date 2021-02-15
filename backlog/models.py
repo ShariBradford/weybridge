@@ -70,12 +70,12 @@ class Backlog(models.Model):
     description = models.TextField(blank=True, null=True)
     priority = models.IntegerField(
         choices=Priority.choices,
-        verbose_name = 'priorities',
+        verbose_name_plural = 'priorities',
         default = Priority.MEDIUM
     )
     status = models.IntegerField(
         choices=Status.choices,
-        verbose_name = 'statuses',
+        verbose_name_plural = 'statuses',
         default = Status.PENDING,
     )
     created_at = models.DateTimeField(auto_now_add=True)

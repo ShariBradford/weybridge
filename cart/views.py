@@ -25,6 +25,8 @@ def get_or_create_cart(request):
     return cart
 
 def view_cart(request):
+    empty_message = "Your cart is empty. Please keep shopping!"
+    
     # don't create the cart if it does not exist 
     try:
         cart_id = request.session['cart_id']
@@ -42,11 +44,12 @@ def view_cart(request):
         
         context = {
             'cart': cart,
+            'empty': cart.item_count == 0,
+            'empty_message': empty_message,
         }
 
     except KeyError: #no cart_id key in request.session
         cart_id = None
-        empty_message = "Your cart is empty. Please keep shopping!"
         context = {
             'empty': True,
             'empty_message': empty_message,
@@ -72,7 +75,7 @@ def add_to_cart(request,product_id):
             item.quantity += quantity
 
         # item.line_total = item.product.price * float(item.quantity)
-        item.line_total = item.product.get_sale_price() * float(item.quantity)
+        item.line_total = item.product.get_sale_price() * item.quantity
         item.save()
         
         cart.item_count += quantity
@@ -114,7 +117,7 @@ def remove_from_cart(request,product_id):
         item.quantity -= quantity
         if item.quantity > 0:
             # item.line_total = item.product.price * float(item.quantity)
-            item.line_total = item.product.get_sale_price() * float(item.quantity)
+            item.line_total = item.product.get_sale_price() * item.quantity
             item.save()
         else:
             item.delete()
@@ -164,14 +167,14 @@ def update_cart(request,product_id):
         if quantity > 0:
             item.quantity = quantity
             # item.line_total = item.product.price * float(item.quantity)
-            item.line_total = item.product.get_sale_price() * float(item.quantity)
+            item.line_total = item.product.get_sale_price() * item.quantity
             item.save()
         else:
             item.delete()
 
         items = cart.items.aggregate(Sum('line_total'), Sum('quantity'))
-        cart.item_count = items['quantity__sum']
-        cart.total = items['line_total__sum']
+        cart.item_count = items['quantity__sum'] or 0
+        cart.total = items['line_total__sum'] or 0
         cart.updated_by = request.user
         cart.save()
         request.session['cart_item_count'] = cart.item_count

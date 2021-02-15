@@ -6,7 +6,12 @@ register = template.Library()
 
 @register.inclusion_tag('shop/sidebar.html', takes_context=True)
 def sidebar(context):
-    return {'categories': get_categories(None),'test':'Testing 123'}
+    # print(f"{context['user'].first_name}")
+    return {
+        'categories': get_categories(None),
+        'user': context['user'], 
+        'test':'Testing 123'
+    }
 
 @register.filter(name='strip_characters')
 @stringfilter

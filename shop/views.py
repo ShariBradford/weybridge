@@ -399,21 +399,30 @@ class ProductDetail(DetailView):
         rating_info = get_product_rating_for_user(self.request.user,self.object)
         # print(f"Rating information for {self.object}:")
         # print(f"{rating_info}")
-        # #get the oversall ratings
-        # average_rating = Rating.objects.filter(product_id=self.object.id).aggregate(Avg('number_of_stars'))['number_of_stars__avg'] or 0
-        # all_ratings = self.object.ratings.all() # product.ratings.all()
-
-        context['average_rating'] = rating_info['average_rating']
-        context['all_ratings'] = rating_info['all_ratings']
-        context['user_has_rated_item'] = rating_info['user_has_rated_item']
-        context['user_rating_this_item'] = rating_info['user_rating_this_item']
-        context['form'] = rating_info['form']
-        context['question_form'] = QuestionForm()
-        context['answer_form'] = AnswerForm()
-        context['categories'] = " | ".join(list(category.name for category in self.object.categories.all()))
         # print(f'User Rating: {context["user_rating_this_item"].number_of_stars or None}')   
 
-        context['breadcrumbs'] = get_breadcrumbs('product',self.object.id)
+        # context['average_rating'] = rating_info['average_rating']
+        # context['all_ratings'] = rating_info['all_ratings']
+        # context['user_has_rated_item'] = rating_info['user_has_rated_item']
+        # context['user_rating_this_item'] = rating_info['user_rating_this_item']
+        # context['form'] = rating_info['form']
+        # context['question_form'] = QuestionForm()
+        # context['answer_form'] = AnswerForm()
+        # context['categories'] = " | ".join(list(category.name for category in self.object.categories.all()))
+
+        context.update({
+            'average_rating': rating_info['average_rating'],
+            'all_ratings': rating_info['all_ratings'],
+            'user_has_rated_item': rating_info['user_has_rated_item'],
+            'user_rating_this_item': rating_info['user_rating_this_item'],
+            'form': rating_info['form'],
+            'question_form': QuestionForm(),
+            'answer_form': AnswerForm(),
+            'categories': " | ".join(list(category.name for category in self.object.categories.all())),
+            'breadcrumbs': get_breadcrumbs('product',self.object.id),
+        })
+        
+        #  GET RECENTLY VIEWED PRODUCTS
 
         # Don't show the current item in recently viewed.
         # Put the recently_viewed items in the context before adding the current item to recently_viewed.
@@ -433,12 +442,13 @@ class ProductDetail(DetailView):
                 # print(f'This object ({obj.id}) already in recently viewed items ({recently_viewed})')
                 recently_viewed.remove(obj.id)
                 # print(f"Recent (after removing current item): {Product.objects.filter(id__in = recently_viewed)}")
-                context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)
+                context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
+
             elif len(recently_viewed) > recently_viewed_max:
                 # print(f'Too many items in recently viewed items ({len(recently_viewed)})')
                 # check if recently_viewed has equal to or more than the maximum number of items
                 # if so, delete the last one 
-                context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)
+                context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
                 del recently_viewed[-1]
                 # print(f"Recent (after resizing list): {Product.objects.filter(id__in = recently_viewed)}")            
 
@@ -664,12 +674,15 @@ class CategoryDetail(DetailView):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
 
-        self.subcategories = get_category_children(self.object.id)       
-        context['subcategories'] = " | ".join(list(category.name for category in Category.objects.filter(id__in = self.subcategories).all()))
-
-        context['breadcrumbs'] = get_breadcrumbs('category',self.object.id)
-        
-        context['product_count'] = Product.objects.filter(categories__id__in = self.subcategories).distinct().count()
+        self.subcategories = get_category_children(self.object.id) 
+        context.update({
+            'subcategories': " | ".join(list(category.name for category in Category.objects.filter(id__in = self.subcategories).all())),
+            'breadcrumbs': get_breadcrumbs('category',self.object.id),
+            'product_count': Product.objects.filter(categories__id__in = self.subcategories).distinct().count(),
+        })      
+        # context['subcategories'] = " | ".join(list(category.name for category in Category.objects.filter(id__in = self.subcategories).all()))
+        # context['breadcrumbs'] = get_breadcrumbs('category',self.object.id)
+        # context['product_count'] = Product.objects.filter(categories__id__in = self.subcategories).distinct().count()
 
         # print(f"Subcategories ARRAY for {self.object.name}: {self.subcategories}")
         # print(f"Subcategories for {self.object.name}: {context['subcategories']}")
@@ -723,9 +736,13 @@ class CategoryProductList(ProductList):
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
-        # Add in the category
-        context['category'] = self.category
-        context['breadcrumbs'] = get_breadcrumbs('category',self.category.id)
+        # Add in the category and breadcrumbs
+        context.update({
+            'category': self.category,
+            'breadcrumbs': get_breadcrumbs('category',self.category.id),
+        })
+        # context['category'] = self.category
+        # context['breadcrumbs'] = get_breadcrumbs('category',self.category.id)
         return context
 
 class CollectionList(ListView):
@@ -744,8 +761,12 @@ class CollectionDetail(DetailView):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
 
-        context['breadcrumbs'] = get_breadcrumbs('other',self.object.id,self.object.name)       
-        context['product_count'] = Product.objects.filter(collection = self.object).count()
+        context.update({
+            'breadcrumbs': get_breadcrumbs('other',self.object.id,self.object.name),
+            'product_count': Product.objects.filter(collection = self.object).count(),
+        })
+        # context['breadcrumbs'] = get_breadcrumbs('other',self.object.id,self.object.name)       
+        # context['product_count'] = Product.objects.filter(collection = self.object).count()
 
         # print(f"Breadcrumbs for {self.object.name}: {context['breadcrumbs']}")
         # print(f"Product Count for {self.object.name}: {context['product_count']}")
@@ -794,12 +815,17 @@ class CollectionProductList(ProductList):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
         # Add in the category
-        context['collection'] = self.collection
-        context['breadcrumbs'] = get_breadcrumbs('page',None,self.collection.name)
+        context.update({
+            'collection': self.collection,
+            'breadcrumbs': get_breadcrumbs('page',None,self.collection.name),
+        })
+        # context['collection'] = self.collection
+        # context['breadcrumbs'] = get_breadcrumbs('page',None,self.collection.name)
         return context
 
 class FavoriteProductList(ProductList):
     template_name = 'shop/favorite_products.html'
+    paginate_by = 8
 
     def get_queryset(self):
         qs = super().get_queryset()

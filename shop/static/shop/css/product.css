@@ -41,3 +41,7 @@
 .recently-viewed .products .new-item {
     display:none;
 }
+
+.recently-viewed .products nav {
+    display:none;
+}

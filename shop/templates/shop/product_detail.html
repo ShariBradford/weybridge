@@ -195,7 +195,7 @@
     </div>
     {% endif %}
 
-    <div class="row">
+    <div class="row my-4">
         <div class="ratings-info col-7">
             <div class="d-inline-flex justify-content-start align-items-center">
                 <h4 class="my-0" id="ratings">Average Rating: <span class="rating-number" data-rating="{{average_rating|stringformat:'.2F'}}" data-rating-size="medium"></span></h4>
@@ -253,10 +253,9 @@
                 {% endfor %}
             </div><!-- end .ratings -->
         </div><!-- end .ratings-info -->
-
         <div class="comments col-5">
             <div class="d-inline-flex justify-content-start align-items-center">
-                <h4>Questions</h4>
+                <h4 class="my-0">Questions</h4>
                 {% if user.is_authenticated %}
                 <div class="btn btn-info ml-3 newComment"><small><i class="fas fa-plus-circle"></i> New Question</small></div>
                 {% else %}

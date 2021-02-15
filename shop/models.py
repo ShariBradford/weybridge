@@ -49,7 +49,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = "categories"
-        ordering: "name"
+        ordering= ["name"]
 
     def __str__(self):
         return self.name
@@ -84,7 +84,7 @@ class Collection(models.Model):
 
     class Meta:
         verbose_name_plural = "collections"
-        ordering: "name"
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -274,6 +274,10 @@ class Sale(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(User,related_name="sales_updated", on_delete=models.CASCADE)
     created_by = models.ForeignKey(User,related_name="sales_created", on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name_plural = "sales"
+        ordering = ["-start_date"]
 
     def __str__(self):
         return f"{self.name}"
@@ -533,6 +537,18 @@ class UserProfile(models.Model):
     def get_absolute_url(self):
         return reverse('accounts:user_profile',kwargs={'profiled_user_id': self.id})
     
+    def favorite(self, product):
+        """Favorite `product`."""
+        self.favorites.add(product)
+
+    def unfavorite(self, product):
+        """Unfavorite `product`."""
+        self.favorites.remove(product)
+
+    def has_favorited(self, product):
+        """Returns True if we have favorited `product`; else False."""
+        return self.favorites.filter(pk=product.pk).exists()
+
 class UserProfileForm(ModelForm):
     class Meta:
         model = UserProfile

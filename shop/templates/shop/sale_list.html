@@ -59,7 +59,7 @@
                 <td>
                     <img src="{{ sale.profile_pic.url }}" alt="{{ sale.name }}" style="width:30px;">
                     <a href="{% url 'shop:sale_details' pk=sale.id %}">
-                        {{ sale.name }}
+                        {{ sale.name }} ({{ sale.promotions.count }} item{{sale.promotions.count|pluralize}})
                     </a>
                 </td>
                 <td>{{ sale.promo_code }}</td>

@@ -14,9 +14,13 @@
         <a href="{% url 'shop:sale_products' %}">Sale</a>
     </div>                
 
-    {% if  request.user.is_staff %}
-    <div class="category" id="category-sale" style="margin-left:0px">
-        <a href="{% url 'shop:promotions' %}">Promotions</a>
+    {% if  user.is_staff %}
+    <div class="category" id="category-promotions" style="margin-left:0px">
+        <a href="{% url 'shop:promotions' %}">Promotions</a> <span class="badge badge-primary" style="font-size:8pt;">ADMIN</span>
+    </div>                
+
+    <div class="category" id="category-sales" style="margin-left:0px">
+        <a href="{% url 'shop:sales' %}">Sales</a> <span class="badge badge-primary" style="font-size:8pt;">ADMIN</span>
     </div>                
     {% endif %}
 </div>
