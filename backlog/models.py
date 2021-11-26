@@ -14,6 +14,10 @@ import math
 import string 
 import random 
 
+# def backlog_path(instance, filename):
+#     # file will be uploaded to MEDIA_ROOT/dish_<id>/<filename>
+#     return f'product_{instance.id}/size_chart_{filename}'
+
 class Backlog(models.Model):
     
     class Category(models.IntegerChoices):
@@ -70,12 +74,10 @@ class Backlog(models.Model):
     description = models.TextField(blank=True, null=True)
     priority = models.IntegerField(
         choices=Priority.choices,
-        verbose_name_plural = 'priorities',
         default = Priority.MEDIUM
     )
     status = models.IntegerField(
         choices=Status.choices,
-        verbose_name_plural = 'statuses',
         default = Status.PENDING,
     )
     created_at = models.DateTimeField(auto_now_add=True)

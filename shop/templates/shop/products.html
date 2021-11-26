@@ -34,18 +34,24 @@
                     <div class="card-title">
                         <!-- container for title and price -->
                         <span><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></span>
+                        {% if product.is_on_sale %}
                         <span>
-                            {% if product.is_on_sale %}
+                            <small class="old-price strike-through">${{ product.price|floatformat:2|intcomma }}</small>
+                            <span class="indicator-sale">
                                 ${{ product.get_sale_price|floatformat:2|intcomma }}
-                            {% else %}
-                                ${{ product.price|floatformat:2|intcomma }}
-                            {% endif %}
+                            </span>
                         </span>
+                        {% else %}
+                        <span>
+                            ${{ product.price|floatformat:2|intcomma }}
+                        </span>
+                        {% endif %}
                     </div><!-- end container for title and price -->
                     <p>
                         <span data-rating="{{ product.get_average_rating|floatformat }}" data-rating-size="small"></span> 
                         <small>({{ product.ratings.count }} Rating{{ product.ratings.count|pluralize }})</small>
                     </p>
+                    
 
                     {% if request.user.is_staff %}
                     <p class="edit-button" title="Edit" style="color:#009EC3">
@@ -93,7 +99,8 @@
                     {% if product.is_on_sale  %}
                     <div class="indicators indicator-sale">
                         <i class="fas fa-bookmark fa-rotate-270 fa-lg"></i>
-                        SALE!
+                        {{ product.best_promotion_name|upper }}
+                        <!-- SALE! -->
                     </div>
                     {% elif product.is_new  %}
                     <div class="indicators indicator-new">

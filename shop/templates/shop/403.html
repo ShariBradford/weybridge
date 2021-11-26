@@ -1,0 +1,36 @@
+{% extends 'shop/base.html' %}
+{% load static humanize %}
+
+{% block css %}
+{% endblock css %}
+
+{% block greeting %}{% if user.is_authenticated %} {{ user.first_name }}{% else %}{% endif %}{% endblock greeting %}
+
+{% block profile %}
+{% if user.is_authenticated %}
+<a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+    class="fas fa-user-cog"></i>Profile</a>
+{% else %}
+<a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fas fa-user-cog"></i>Register</a>
+{% endif %}
+{% endblock profile %}
+
+{% block login %}
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i>Logout</a>
+{% else %}
+<a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i>Login</a>
+{% endif %}
+{% endblock login %}
+
+
+
+{% block content %}
+<div style="display:flex;flex-direction: column; justify-content: center;align-items: center;">
+    <h1>Aww Damn!</h1>
+    <img src="{% static 'shop/unhappy-dogs-in-costume-2-1280x720.png' %}" style="width:400px;" alt="Unhappy dog">
+    <p>Something went wrong!</p>
+    <a href="/">Return home</a>
+</div>
+
+{% endblock%}

@@ -82,6 +82,16 @@
     </div><!-- end .row -->
 
     <div class="row">
+        <div>
+            <h4 class="mt-3">Promotions in this Sale</h4>
+            <div class="new-item-button ml-2">
+                {% if request.user.is_staff %}
+                    <a href="{% url 'shop:promotion_add' %}?sale_id={{ sale.id }}" class="btn btn-info">
+                        <small><i class="fas fa-plus-circle"></i> New</small>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
         <table class="table">
             <thead>
                 <th>Promotion</th>

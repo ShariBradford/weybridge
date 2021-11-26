@@ -16,6 +16,8 @@ products_patterns = [
     # path('favorites', views.FavoriteProductList.as_view(), name="favorite_products"),
     # path('search', views.search_products, name="search_products"),
     path('sale', views.SaleProductList.as_view(), name="sale_products"),
+    path('recent/', views.RecentProductsView.as_view(), name="recent"),
+    path('recent/clear/', views.clear_recent, name="clear_recent"),
 ]
 
 product_patterns = [
@@ -86,6 +88,5 @@ urlpatterns = [
     path('favorites/', views.FavoriteProductList.as_view(), name="favorite_products"),
     path('rating/<int:rating_id>/vote/<negint:score>', views.rating_vote, name="rating_vote"),
     path('question/<int:question_id>/answer', views.answer_question, name="answer_question"),
-    path('test/', views.test, name="test"),
-    path('test/recent/clear/', views.clear_recent, name="clear_recent"),
+    # path('test/', views.test, name="test"),
 ]

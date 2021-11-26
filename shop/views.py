@@ -1,21 +1,42 @@
-from django.views.generic import ListView,DetailView
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from datetime import datetime,timezone,timedelta
+
+
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import User
+from django.core import serializers
+from django.db.models import (
+    OuterRef, Subquery, Avg, F, Q, Count, Min, FilteredRelation, Value, IntegerField, 
+    CharField, BooleanField, Case, When)
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse, HttpResponseNotAllowed
 from django.shortcuts import render, redirect, reverse, get_object_or_404,HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
-from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib import messages
-from django.db.models import Avg, F, Q, Count, FilteredRelation, Value, IntegerField, CharField, Case, When
+from django.views.generic import ListView,DetailView
+from django.views.generic.base import TemplateView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
+
 from ipware import get_client_ip
-from datetime import datetime
-from django.contrib.auth.models import User
-from django.http import JsonResponse, HttpResponseNotAllowed
+
 from .models import *
-from django.core import serializers
 
 category_qs = Category.objects.all()
 throw_away_var = len(category_qs)   #force evaluation of queryset
 recently_viewed_max = 4 # number of recently viewed products to store in session
+
+class StaffMemberRequiredMixin(UserPassesTestMixin):
+    # raise_exception = False
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        """ Do whatever you want here if the user doesn't pass the test """
+        if self.request.user.is_authenticated:
+            return render(self.request, 'shop/403.html')
+        return super(StaffMemberRequiredMixin,self).handle_no_permission()
 
 def test(request):
     return render(request, 'shop/test.html', {'test': 'Testing 123'})
@@ -333,6 +354,60 @@ def ajax_unfavorite(request, product_id):
     # return the user to the same page they were on when they favorited the item
     return redirect(request.META.get('HTTP_REFERER'))
 
+class RecentlyViewedMixin(object):
+    # maximum number of products to show in recently viewed list
+    max = recently_viewed_max
+    
+    def get_recently_viewed_products(self, **kwargs):
+        #  GET RECENTLY VIEWED PRODUCTS
+
+        current_item_id = kwargs.get('current_item_id', None)
+        remove_current_item = kwargs.get('remove_current_item', False)
+        list_order = 'id'
+
+        try:
+            recently_viewed = self.request.session['recently_viewed']
+            # print(f"Recent: {Product.objects.filter(id__in = recently_viewed)}")
+            
+            # specify the order of the queryset according to the recently_viewed array
+            list_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(recently_viewed)])
+            # reference 'django models conditional expressions' for info on Case and When
+            # print(f"List Order: {list_order}")
+
+            if current_item_id and remove_current_item and current_item_id in recently_viewed:
+                # print(f'This object ({obj.id}) already in recently viewed items ({recently_viewed})')
+                recently_viewed.remove(current_item_id)
+                # print(f"Recent (after removing current item): {Product.objects.filter(id__in = recently_viewed)}")
+
+            if len(recently_viewed) > self.max:
+                # print(f'Too many items in recently viewed items ({len(recently_viewed)})')
+                # check if recently_viewed has equal to or more than the maximum number of items
+                # if so, delete the last one 
+                del recently_viewed[-1]
+                # print(f"Recent (after resizing list): {Product.objects.filter(id__in = recently_viewed)}")            
+
+        except KeyError:
+            recently_viewed = []
+
+        # Add recently viewed items to the session variable
+        self.request.session['recently_viewed'] = recently_viewed
+        products = Product.objects.filter(id__in = recently_viewed).order_by(list_order)
+
+        # insert this item at the front of the recently_viewed list
+        if current_item_id:
+            recently_viewed.insert(0,current_item_id)
+            # print(f"Recently viewed items (after adding current item): {recently_viewed}") # {Product.objects.filter(id__in = recently_viewed)}")
+
+        return products
+
+class RecentProductsView(StaffMemberRequiredMixin, RecentlyViewedMixin,TemplateView):
+    template_name = 'shop/recent_products.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['recently_viewed_items'] = self.get_recently_viewed_products()
+        return context
+
 class ProductList(ListView):
     model = Product
     paginate_by = 12
@@ -376,9 +451,19 @@ class ProductList(ListView):
             # qs = Product.objects.all()
             filter_conditions = Q(name__isnull = False)
 
+        best_promotion = (
+            Promotion.objects.filter(
+                product=OuterRef('pk'),
+                sale__start_date__lte=date.today(),
+                sale__end_date__gte=date.today(),
+            )
+            .order_by('sale_price')
+        )
         queryset = Product.objects.filter(filter_conditions).distinct().annotate(
             avg_rating=Avg('ratings__number_of_stars'), 
-            num_ratings=Count('ratings')
+            num_ratings=Count('ratings'),
+            best_promotion_price=Subquery(best_promotion.values('sale_price')[:1]),
+            best_promotion_name=Coalesce(Subquery(best_promotion.values('sale__name')[:1]),Value('')),
         ).prefetch_related('ratings','promotions','product_photos')
 
         ordering = self.get_ordering()
@@ -390,7 +475,7 @@ class ProductList(ListView):
 
         return queryset
 
-class ProductDetail(DetailView):
+class ProductDetail(RecentlyViewedMixin, DetailView):
     model = Product
 
     def get_context_data(self, **kwargs):
@@ -427,43 +512,48 @@ class ProductDetail(DetailView):
         # Don't show the current item in recently viewed.
         # Put the recently_viewed items in the context before adding the current item to recently_viewed.
         obj = self.object
-        try:
-            recently_viewed = self.request.session['recently_viewed']
-            # print(f"Recent: {Product.objects.filter(id__in = recently_viewed)}")
+        # try:
+        #     recently_viewed = self.request.session['recently_viewed']
+        #     # print(f"Recent: {Product.objects.filter(id__in = recently_viewed)}")
             
-            # specify the order of the queryset according to the recently_viewed array
-            list_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(recently_viewed)])
-            # reference 'django models conditional expressions' for info on Case and When
+        #     # specify the order of the queryset according to the recently_viewed array
+        #     list_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(recently_viewed)])
+        #     # reference 'django models conditional expressions' for info on Case and When
 
-            # print(f"List Order: {list_order}")
+        #     # print(f"List Order: {list_order}")
 
-            # if the item is already in the list, remove it.
-            if obj.id in recently_viewed:
-                # print(f'This object ({obj.id}) already in recently viewed items ({recently_viewed})')
-                recently_viewed.remove(obj.id)
-                # print(f"Recent (after removing current item): {Product.objects.filter(id__in = recently_viewed)}")
-                context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
+        #     # if the item is already in the list, remove it.
+        #     if obj.id in recently_viewed:
+        #         # print(f'This object ({obj.id}) already in recently viewed items ({recently_viewed})')
+        #         recently_viewed.remove(obj.id)
+        #         # print(f"Recent (after removing current item): {Product.objects.filter(id__in = recently_viewed)}")
+        #         context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
 
-            elif len(recently_viewed) > recently_viewed_max:
-                # print(f'Too many items in recently viewed items ({len(recently_viewed)})')
-                # check if recently_viewed has equal to or more than the maximum number of items
-                # if so, delete the last one 
-                context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
-                del recently_viewed[-1]
-                # print(f"Recent (after resizing list): {Product.objects.filter(id__in = recently_viewed)}")            
+        #     elif len(recently_viewed) > recently_viewed_max:
+        #         # print(f'Too many items in recently viewed items ({len(recently_viewed)})')
+        #         # check if recently_viewed has equal to or more than the maximum number of items
+        #         # if so, delete the last one 
+        #         context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
+        #         del recently_viewed[-1]
+        #         # print(f"Recent (after resizing list): {Product.objects.filter(id__in = recently_viewed)}")            
 
-            # insert this item at the front of the recently_viewed list
-            recently_viewed.insert(0,obj.id)
-            # print(f"Recently viewed items (after adding current item): {recently_viewed}") # {Product.objects.filter(id__in = recently_viewed)}")
+        #     else:
+        #         context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
 
-        except KeyError:
-            recently_viewed = [obj.id]
+        #     # insert this item at the front of the recently_viewed list
+        #     recently_viewed.insert(0,obj.id)
+        #     # print(f"Recently viewed items (after adding current item): {recently_viewed}") # {Product.objects.filter(id__in = recently_viewed)}")
+
+        # except KeyError:
+        #     recently_viewed = [obj.id]
             
-        self.request.session['recently_viewed'] = recently_viewed
+        # # Add recently viewed items to the session variable
+        # self.request.session['recently_viewed'] = recently_viewed
+        context['recently_viewed_items'] = self.get_recently_viewed_products(current_item_id=obj.id,remove_current_item=True)[0:4]
 
         return context
 
-class ProductCreate(CreateView):
+class ProductCreate(StaffMemberRequiredMixin, CreateView):
     model = Product
     form_class = ProductFormWithImages
     
@@ -488,7 +578,7 @@ class ProductCreate(CreateView):
         # return super().form_valid(form)
         return response
 
-class ProductUpdate(UpdateView):
+class ProductUpdate(StaffMemberRequiredMixin, UpdateView):
     model = Product
     # form_class = ProductForm
     form_class = ProductFormWithImages
@@ -534,7 +624,7 @@ class ProductUpdate(UpdateView):
         # return super().form_valid(form)
         return response
 
-class ProductDelete(DeleteView):
+class ProductDelete(StaffMemberRequiredMixin, DeleteView):
     model = Product
     success_url = reverse_lazy('shop:index')
     template_name = 'shop/object_confirm_delete.html'
@@ -572,7 +662,7 @@ def product_photo_make_primary(request, product_photo_id):
     }
     return render(request,'shop/existing-images.html', context)
 
-class SaleList(ListView):
+class SaleList(StaffMemberRequiredMixin, ListView):
     model = Sale
 
     def get_context_data(self, **kwargs):
@@ -581,10 +671,10 @@ class SaleList(ListView):
         context['breadcrumbs'] = get_breadcrumbs('page',None,'Sales')
         return context
 
-class SaleDetail(DetailView):
+class SaleDetail(StaffMemberRequiredMixin, DetailView):
     model = Sale
 
-class SaleCreate(CreateView):
+class SaleCreate(StaffMemberRequiredMixin, CreateView):
     model = Sale
     form_class = SaleForm
 
@@ -593,7 +683,7 @@ class SaleCreate(CreateView):
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
 
-class SaleUpdate(UpdateView):
+class SaleUpdate(StaffMemberRequiredMixin, UpdateView):
     model = Sale
     form_class = SaleForm
 
@@ -601,12 +691,12 @@ class SaleUpdate(UpdateView):
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
 
-class SaleDelete(DeleteView):
+class SaleDelete(StaffMemberRequiredMixin, DeleteView):
     model = Sale
     success_url = reverse_lazy('shop:sales')
     template_name = 'shop/object_confirm_delete.html'
 
-class PromotionList(ListView):
+class PromotionList(StaffMemberRequiredMixin, ListView):
     model = Promotion
     ordering = ['-sale__start_date', 'product__name']
 
@@ -616,22 +706,25 @@ class PromotionList(ListView):
         context['breadcrumbs'] = get_breadcrumbs('page',None,'Promotions')
         return context
 
-class PromotionDetail(DetailView):
+class PromotionDetail(StaffMemberRequiredMixin, DetailView):
     model = Promotion
 
-class PromotionCreate(CreateView):
+class PromotionCreate(StaffMemberRequiredMixin, CreateView):
     model = Promotion
     form_class = PromotionForm
     success_url = reverse_lazy('shop:promotions')
 
     def get_initial(self):
-        try:
-            product_pk = self.kwargs['pk']
-            product = Product.objects.get(id=product_pk)
-            return {'product':product}
+        product_pk = self.kwargs.get('pk',None)
+        # try:
+        #     product = Product.objects.get(id=product_pk)
+        # except Product.DoesNotExist:
+        #     product = None
 
-        except KeyError:
-            return
+        sale_id = self.request.GET.get('sale_id',None)
+        print(f'Sale ID: {sale_id}')
+
+        return {'product':product_pk, 'sale': sale_id}
 
     # def get_context_data(self, **kwargs):
     #     context = super().get_context_data(**kwargs)
@@ -644,7 +737,7 @@ class PromotionCreate(CreateView):
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
 
-class PromotionUpdate(UpdateView):
+class PromotionUpdate(StaffMemberRequiredMixin, UpdateView):
     model = Promotion
     form_class = PromotionForm
     success_url = reverse_lazy('shop:promotions')
@@ -653,7 +746,7 @@ class PromotionUpdate(UpdateView):
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
 
-class PromotionDelete(DeleteView):
+class PromotionDelete(StaffMemberRequiredMixin, DeleteView):
     model = Promotion
     success_url = reverse_lazy('shop:index')
     template_name = 'shop/object_confirm_delete.html'
@@ -667,7 +760,7 @@ class CategoryList(ListView):
         context['breadcrumbs'] = get_breadcrumbs('page',None,'Categories')
         return context
 
-class CategoryDetail(DetailView):
+class CategoryDetail(StaffMemberRequiredMixin, DetailView):
     model = Category
 
     def get_context_data(self, **kwargs):
@@ -690,7 +783,7 @@ class CategoryDetail(DetailView):
         # print(f"Product Count for {self.object.name}: {context['product_count']}")
         return context
 
-class CategoryCreate(CreateView):
+class CategoryCreate(StaffMemberRequiredMixin, CreateView):
     model = Category
     form_class = CategoryForm
     success_url = reverse_lazy('shop:categories')
@@ -700,7 +793,7 @@ class CategoryCreate(CreateView):
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
 
-class CategoryUpdate(UpdateView):
+class CategoryUpdate(StaffMemberRequiredMixin, UpdateView):
     model = Category
     form_class = CategoryForm
 
@@ -713,7 +806,7 @@ class CategoryUpdate(UpdateView):
 
         return super().form_valid(form)
 
-class CategoryDelete(DeleteView):
+class CategoryDelete(StaffMemberRequiredMixin, DeleteView):
     model = Category
     success_url = reverse_lazy('shop:categories')
     template_name = 'shop/object_confirm_delete.html'
@@ -772,7 +865,7 @@ class CollectionDetail(DetailView):
         # print(f"Product Count for {self.object.name}: {context['product_count']}")
         return context
 
-class CollectionCreate(CreateView):
+class CollectionCreate(StaffMemberRequiredMixin, CreateView):
     model = Collection
     form_class = CollectionForm
     success_url = reverse_lazy('shop:collections')
@@ -782,7 +875,7 @@ class CollectionCreate(CreateView):
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
 
-class CollectionUpdate(UpdateView):
+class CollectionUpdate(StaffMemberRequiredMixin, UpdateView):
     model = Collection
     form_class = CollectionForm
 
@@ -795,7 +888,7 @@ class CollectionUpdate(UpdateView):
 
         return super().form_valid(form)
 
-class CollectionDelete(DeleteView):
+class CollectionDelete(StaffMemberRequiredMixin, DeleteView):
     model = Collection
     success_url = reverse_lazy('shop:collections')
     template_name = 'shop/object_confirm_delete.html'
@@ -963,6 +1056,7 @@ def get_sale_info(request, sale_id):
         return JsonResponse(data)
     return HttpResponseNotAllowed(['POST'])
 
+@staff_member_required
 def clear_recent(request):
     request.session['recently_viewed'] = []
     print(f"Recently viewed items: {request.session['recently_viewed']}")

@@ -382,10 +382,10 @@ ul#id_number_of_stars li input:checked {
     position: absolute;
     left: 0;
     top: 10px;
-    display: flex;
-    justify-content: center;
+    /* display: flex;
+    justify-content: start;
     align-items: center;
-    width: 60px;
+    width: 60px; */
     height: 15px;
     font-size: 10pt;
     padding: 0;
@@ -420,6 +420,9 @@ ul#id_number_of_stars li input:checked {
     color: #FF00FF;
 }
 
+.old-price {
+    color: lightgray;
+}
 .breadcrumb {
     background-color: white;
     font-size: 8pt;

@@ -182,7 +182,7 @@ class Product(models.Model):
             return self.promotions.filter(
                 sale__start_date__lte=date.today(),
                 sale__end_date__gte=date.today()
-            ).order_by('-sale_price').first().sale_price
+            ).order_by('sale_price').first().sale_price
         else:
             return self.price
     get_sale_price.short_description = 'Sale Price'
@@ -193,7 +193,7 @@ class Product(models.Model):
             return self.promotions.filter(
                 sale__start_date__lte=date.today(),
                 sale__end_date__gte=date.today()
-            ).order_by('-sale_price').first()
+            ).order_by('sale_price').first()
         else:
             return None
     get_promotion.short_description = 'Promotion'
@@ -206,7 +206,7 @@ class Product(models.Model):
             # sale = self.promotions.filter(
             #     sale__start_date__lte=date.today(),
             #     sale__end_date__gte=date.today()
-            # ).order_by('-sale_price').first().sale
+            # ).order_by('sale_price').first().sale
             promotion = self.get_promotion()
             if promotion:
                 sale = promotion.sale
