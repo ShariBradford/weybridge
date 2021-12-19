@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.utils.translation import ngettext
 from .models import *
 
 # admin.site.register(Backlog)
@@ -10,6 +11,25 @@ class BacklogAdmin(admin.ModelAdmin):
     search_fields = ('title', 'app_name','model_name','description')
     list_display = ('title', 'app_name', 'model_name', 'category', 'priority','status')
     list_filter = ('app_name','model_name','category', 'priority','status')
+    list_editable = ('app_name','model_name','status','priority', 'category')
+    actions = ['mark_completed']
+
+    def mark_completed(self, request, queryset):
+        updated = queryset.update(status = Backlog.Status.COMPLETED)
+        self.message_user(
+            request, 
+            ngettext(
+                f"{updated} item successfully marked as completed.", 
+                f"{updated} items successfully marked as completed.", 
+                updated
+            ),
+            level=messages.SUCCESS, 
+            extra_tags='', 
+            fail_silently=True
+        )
+        for obj in queryset:
+            self.log_change(request, obj, f"Marked completed: '{str(obj)}'")
+    mark_completed.short_description='Mark selected items completed'
 
     def save_model(self, request, obj, form, change):
         print(f"Saving {obj.title}. Change = {change}")

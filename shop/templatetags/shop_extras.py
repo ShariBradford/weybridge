@@ -1,11 +1,14 @@
 from django import template
 from django.template.defaultfilters import stringfilter
-from shop.views import get_categories
+from shop.services import get_categories
 
 register = template.Library()
 
 @register.inclusion_tag('shop/sidebar.html', takes_context=True)
 def sidebar(context):
+    """
+        Template tag that returns the category sidebar markup.
+    """
     # print(f"{context['user'].first_name}")
     return {
         'categories': get_categories(None),
@@ -16,12 +19,24 @@ def sidebar(context):
 @register.filter(name='strip_characters')
 @stringfilter
 def strip_characters(input_string):
-    return input_string.replace('\\','').replace(' ','_').replace('\'','').replace('\"','')
+    """
+        Template tag that removes certain chracters from input_string param. 
+    """
+    return (
+        input_string
+        .replace('\\','')
+        .replace(' ','_')
+        .replace('\'','')
+        .replace('\"','')
+    )
 
 @register.filter(name='lower', is_safe=True)
 @stringfilter
 def lower(value):
-    """Converts a string into all lowercase"""
+    """
+        Converts a string into all lowercase
+    """
+
     return value.lower()
 
 @register.simple_tag(takes_context=True)

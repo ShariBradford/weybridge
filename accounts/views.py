@@ -1,12 +1,15 @@
-from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.forms import UserCreationForm
-from .forms import SignUpForm
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from shop.models import *
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.contrib import messages
- 
+from django.shortcuts import render, redirect
+from django.views.generic import DetailView
+from django.views.generic.edit import UpdateView
+
+from .forms import SignUpForm
+from shop.models import *
+
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -24,11 +27,39 @@ def signup(request):
     return render(request, 'registration/signup.html', {'form': form})
 
 def user_profile(request,profiled_user_id):
-    profiled_user = User.objects.get(id=profiled_user_id)
-    location = profiled_user.profile.location or ''
+    profiled_user = (
+        User.objects
+        .select_related('profile')
+        .prefetch_related(
+            'ratings__product__product_photos',
+            'questions_asked__product__product_photos',
+            'questions_followed__product__product_photos',
+            'product_answers__question__product__product_photos',
+        )
+        .get(id=profiled_user_id)
+    )
 
-    average_rating = Rating.objects.filter(user=profiled_user).aggregate(Avg('number_of_stars'))['number_of_stars__avg'] or 0
+    location = profiled_user.profile.location or None
+
+    # average_rating_old = (
+    #     Rating.objects.filter(user=profiled_user)
+    #     .aggregate(
+    #         Avg('number_of_stars')
+    #     )['number_of_stars__avg'] or 0
+    # )
+
     all_ratings = profiled_user.ratings.all()
+
+    average_rating = (
+        all_ratings
+        .aggregate(
+            Avg('number_of_stars')
+        )['number_of_stars__avg'] or 0
+    )
+
+    all_questions_followed = profiled_user.questions_followed.all().order_by('product')
+    all_questions_asked = profiled_user.questions_asked.all().order_by('product')
+    all_answers = profiled_user.product_answers.all().order_by('question__product')
 
     context = {
         'user': request.user,
@@ -36,6 +67,9 @@ def user_profile(request,profiled_user_id):
         'location': location,
         'user_average_rating' : average_rating,
         'all_ratings' : all_ratings,
+        'all_questions_followed': all_questions_followed,
+        'all_questions_asked': all_questions_asked,
+        'all_answers': all_answers,
     }
     return render(request, 'registration/user-profile.html', context)
 

@@ -137,6 +137,9 @@ MEDIA_URL = '/media/'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'support@weybridgeonline.com'
+
 # DATETIME_INPUT_FORMATS += ('%m/%d/%Y %I:%M %p',)
 # CUSTOM FORMAT MUST APPEAR AT THE TOP OF THE LIST, so 
 # overwrite setting with custom + defaults
@@ -166,3 +169,6 @@ PASSWORD_HASHERS = [
 INTERNAL_IPS = [
     '127.0.0.1',
 ]
+
+SHOP_RECENTLY_VIEWED_SESSION_KEY = 'recently_viewed'    # name of session key for recently viewed productslist
+SHOP_RECENTLY_VIEWED_MAX_ITEMS = 5  # number of recently viewed products to store in session

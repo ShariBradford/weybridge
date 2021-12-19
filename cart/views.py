@@ -17,6 +17,7 @@ def get_or_create_cart(request):
     try:
         cart_id = request.session['cart_id']
         cart = Cart.objects.get(id=cart_id)
+        
     except KeyError: #no cart_id key in request.session, so create one
         cart = Cart(user=request.user,created_by=request.user,updated_by=request.user)
         cart.save()

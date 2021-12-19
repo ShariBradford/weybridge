@@ -1,38 +1,59 @@
-from django.db import models
-from django import forms
-from django.forms import ModelForm, ValidationError
-from django.contrib.auth.models import User
-from django.conf import settings
 from datetime import datetime, date, timedelta
-from django.db.models import Avg, UniqueConstraint
+
+from django import forms
+from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.utils.text import slugify
-from django.utils import timezone 
+from django.db import models
+from django.db.models import Avg, UniqueConstraint, Q, Count
+from django.forms import ModelForm, ValidationError
 from django.shortcuts import reverse
+from django.utils import timezone 
+from django.utils.text import slugify
 # from django.utils import unique_slug_generator
+
 import math
-import string 
 import random 
+import string 
 
-def random_string_generator(size = 10, chars = string.ascii_lowercase + string.digits): 
-    return ''.join(random.choice(chars) for _ in range(size)) 
+# def random_string_generator(size = 10, chars = string.ascii_lowercase + string.digits): 
+#     return ''.join(random.choice(chars) for _ in range(size)) 
   
-def unique_slug_generator(instance, new_slug = None): 
-    if new_slug is not None: 
-        slug = new_slug 
-    else: 
-        slug = slugify(instance.first_name) 
-    Klass = instance.__class__ 
-    qs_exists = Klass.objects.filter(slug = slug).exists() 
-      
-    if qs_exists: 
-        new_slug = "{slug}-{randstr}".format( 
-            slug = slug, randstr = random_string_generator(size = 4)) 
-              
-        return unique_slug_generator(instance, new_slug = new_slug) 
-    return slug 
+# def unique_slug_generator(instance, new_slug = None): 
+#     """
+#         Generates a unique slug for an item in a class.
+#     """
 
-class Category(models.Model):
+#     if new_slug is not None: 
+#         slug = new_slug 
+#     else: 
+#         slug = slugify(instance.first_name) 
+#     Klass = instance.__class__ 
+#     qs_exists = Klass.objects.filter(slug = slug).exists() 
+      
+#     if qs_exists: 
+#         new_slug = "{slug}-{randstr}".format( 
+#             slug = slug, randstr = random_string_generator(size = 4)) 
+              
+#         return unique_slug_generator(instance, new_slug = new_slug) 
+#     return slug 
+
+class AbstractHistoryModel(models.Model):
+    """
+    Abstract model that provides history information (created_at, updated_at, created_by, updated_by).
+    This ensures that any model based on this abstract model can automate saving of history information 
+    because the fields required for this will always be present and named consistently.
+    """
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User,related_name="%(class)ss_updated", on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User,related_name="%(class)ss_created", on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+class Category(models.Model):   
     name = models.CharField(max_length=20)
     parent_category = models.ForeignKey("self",related_name="child_categories", blank=True, null=True, on_delete=models.CASCADE)
     description = models.TextField(blank=True, null=True)
@@ -68,7 +89,7 @@ class CategoryForm(ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control'}),
        }        
 
-class Collection(models.Model):
+class Collection(AbstractHistoryModel):
     name = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True, default="Description coming soon!")
     profile_pic = models.ImageField( 
@@ -77,10 +98,10 @@ class Collection(models.Model):
         blank=True,
         null=True,
         )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User,related_name="collections_updated", on_delete=models.CASCADE)
-    created_by = models.ForeignKey(User,related_name="collections_created", on_delete=models.CASCADE)
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
+    # updated_by = models.ForeignKey(User,related_name="collections_updated", on_delete=models.CASCADE)
+    # created_by = models.ForeignKey(User,related_name="collections_created", on_delete=models.CASCADE)
 
     class Meta:
         verbose_name_plural = "collections"
@@ -107,10 +128,14 @@ class CollectionForm(ModelForm):
        }        
 
 def product_directory_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT/dish_<id>/<filename>
+    """
+        Given product instance, returns path where size chart file should be uploaded 
+        (MEDIA_ROOT/product_<id>/size_chart_<filename>).
+    """
+
     return f'product_{instance.id}/size_chart_{filename}'
 
-class Product(models.Model):
+class Product(AbstractHistoryModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, default="Description coming soon!", help_text="Describe the product, its history and why you were inspired to make it.")
     sku = models.CharField(max_length=50)
@@ -124,16 +149,18 @@ class Product(models.Model):
         null=True,
     )
     active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User,related_name="products_updated", on_delete=models.CASCADE)
-    created_by = models.ForeignKey(User,related_name="products_created", on_delete=models.CASCADE)
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
+    # updated_by = models.ForeignKey(User,related_name="products_updated", on_delete=models.CASCADE)
+    # created_by = models.ForeignKey(User,related_name="products_created", on_delete=models.CASCADE)
     # slug = models.SlugField(max_length = 250, null = True, blank = True)
 
     def __str__(self):
         return self.name
 
     # def save(self, *args, **kwargs):
+    #     from .services import unique_slug_generator
+    
     #     self.slug = self.slug or unique_slug_generator(self) #slugify(self.title)
     #     super().save(*args, **kwargs)
 
@@ -145,6 +172,12 @@ class Product(models.Model):
         # return math.ceil(average)
         return average
     get_average_rating.short_description = "Average Rating"
+
+    def get_ratings_with_votes(self):
+        upvotes = Count('votes__score_type', filter=Q(votes__score_type=1))
+        downvotes = Count('votes__score_type', filter=Q(votes__score_type=-1))
+        return self.ratings.annotate(upvotes=upvotes).annotate(downvotes=downvotes).order_by('-created_at')       
+    get_ratings_with_votes.short_description = "Ratings"
 
     def get_default_photo_url(self):
         default_photo = self.product_photos.filter(is_default=True).first()
@@ -170,6 +203,11 @@ class Product(models.Model):
     is_new.short_description = 'New?'
 
     def is_on_sale(self):
+        """
+            Checks if product is on sale based on the sale start and end dates 
+            for any of the product's promotions.
+        """
+
         return self.promotions.filter(
             sale__start_date__lte=date.today(),
             sale__end_date__gte=date.today()
@@ -178,6 +216,12 @@ class Product(models.Model):
     is_on_sale.short_description = 'On Sale?'
 
     def get_sale_price(self):
+        """
+            Returned the sale price of the product by filtering active promotions.
+            Promotions are ordered by sale_price ascending, and the first (lowest) price 
+            is returned.
+        """
+
         if self.is_on_sale():
             return self.promotions.filter(
                 sale__start_date__lte=date.today(),
@@ -189,6 +233,12 @@ class Product(models.Model):
     get_sale_price.admin_order_field = 'price'
 
     def get_promotion(self):
+        """
+            Returns the lowest price promotion by filtering product's active promotions.
+            Promotions are ordered by sale_price ascending, and the first (lowest) price 
+            promotion is returned.
+        """        
+        
         if self.is_on_sale():
             return self.promotions.filter(
                 sale__start_date__lte=date.today(),
@@ -200,6 +250,12 @@ class Product(models.Model):
     get_promotion.admin_order_field = 'price'
 
     def get_sale(self, include_description=False, include_promo_code=False):
+        """
+            Returns the sale associated with the lowest price active promotion.
+            Promotions are ordered by sale_price ascending, and the first (lowest) price 
+            promotion is returned. Returns name of sale and (optionally) description and promo code.
+        """        
+
         return_val = None
 
         if self.is_on_sale():
@@ -254,10 +310,14 @@ class ProductFormWithImages(ProductForm):
         fields = ['images','name', 'collection', 'description', 'sku', 'price', 'categories','inventory_stock','size_chart','active']
     
 def sale_directory_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT/sales/sale_<id>/<sale_name>
+    """
+        Given sale instance, returns path where file should be uploaded 
+        (MEDIA_ROOT/sales/sale_<id>/<sale_name>).
+    """
+
     return f'sales/sale_{instance.id}/{instance.name}'
 
-class Sale(models.Model):
+class Sale(AbstractHistoryModel):
     name = models.CharField(max_length=255, default='Sale')
     start_date = models.DateField(null=True,blank=True, default=date.today)
     end_date = models.DateField(null=True,blank=True)
@@ -270,10 +330,10 @@ class Sale(models.Model):
         blank=True,
         null=True,
         )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User,related_name="sales_updated", on_delete=models.CASCADE)
-    created_by = models.ForeignKey(User,related_name="sales_created", on_delete=models.CASCADE)
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
+    # updated_by = models.ForeignKey(User,related_name="sales_updated", on_delete=models.CASCADE)
+    # created_by = models.ForeignKey(User,related_name="sales_created", on_delete=models.CASCADE)
 
     class Meta:
         verbose_name_plural = "sales"
@@ -317,17 +377,17 @@ class SaleForm(ModelForm):
             'end_date' : forms.TextInput(attrs={'class':'form-control'}),
        }
 
-class Promotion(models.Model):
+class Promotion(AbstractHistoryModel):
     name = models.CharField(max_length=255, default='Sale')
     sale = models.ForeignKey(Sale, related_name='promotions', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, related_name='promotions', on_delete=models.CASCADE)
     sale_price = models.DecimalField(max_digits=10,decimal_places=2)
     start_date = models.DateField(null=True,blank=True, default=date.today)
     end_date = models.DateField(null=True,blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User,related_name="promotions_updated", on_delete=models.CASCADE)
-    created_by = models.ForeignKey(User,related_name="promotions_created", on_delete=models.CASCADE)
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
+    # updated_by = models.ForeignKey(User,related_name="promotions_updated", on_delete=models.CASCADE)
+    # created_by = models.ForeignKey(User,related_name="promotions_created", on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.product.name} on sale for {self.sale_price}"
@@ -434,6 +494,7 @@ class Question(models.Model):
     #id INT
     content = models.CharField(max_length=255)
     asker = models.ForeignKey(User,related_name="questions_asked", on_delete=models.CASCADE)
+    followers = models.ManyToManyField(User, blank=True, null=True, related_name='questions_followed')
     # answers = models.ForeignKey(Answer, related_name='question', on_delete=models.CASCADE, null=True, blank=True)
     product = models.ForeignKey(Product,related_name="questions", on_delete=models.CASCADE)
     date_asked = models.DateField(auto_now_add=True,null=True,blank=True)
@@ -481,7 +542,11 @@ class AnswerForm(ModelForm):
        }
 
 def product_photos_directory_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT/product_<id>/<filename>
+    """
+        Given product_photo instance, returns path where image should be uploaded 
+        (MEDIA_ROOT/products/product_<id>/<filename>).
+    """
+
     return 'products/product_{0}/{1}'.format(instance.product_id, filename)
 
 class ProductPhoto(models.Model):
@@ -512,7 +577,11 @@ class ProductPhotoForm(ModelForm):
        }        
 
 def user_directory_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+    """
+        Given user_profile instance, returns path where profile photo should be uploaded 
+        (MEDIA_ROOT/users/user_<id>/<filename>).
+    """
+
     return 'users/user_{0}/{1}'.format(instance.id, filename)
 
 class UserProfile(models.Model):
@@ -559,3 +628,23 @@ class UserProfileForm(ModelForm):
             'location' : forms.TextInput(attrs={'class':'form-control'}),
             'birth_date': forms.DateTimeInput(attrs={'class': 'form-control'}),
        }
+
+class Contact(models.Model):
+    from_email =  models.EmailField(max_length=150)
+    message = models.TextField()
+    subject = models.CharField(max_length=150)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'Email from {self.from_email} on {self.created_at}'
+
+class ContactForm(ModelForm):
+    class Meta:
+        model = Contact
+        fields = ['from_email','subject','message']
+        widgets = {
+            'from_email' : forms.TextInput(attrs={'class':'form-control'}),
+            'message': forms.Textarea(attrs={'class': 'form-control'}),
+            'subject' : forms.TextInput(attrs={'class':'form-control'}),
+        }

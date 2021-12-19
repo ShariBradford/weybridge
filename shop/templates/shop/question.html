@@ -14,7 +14,13 @@
             <small class="question-actions text-muted my-0">
                 <span>{% if question.answers.count %}{{ question.answers.count }} Answer{{ question.answers.count|pluralize }}{% else %}Unanswered{% endif %}</span>
                 <span>  &bull;  </span>
-                <a href="">Follow</a>
+                <!-- <a href="{% url 'shop:follow_question' question_id=question.id %}">Follow</a> -->
+                <form class="follow-form" 
+                    action="/question/{{ question.id }}/{% if user in question.followers.all %}unfollow{% else %}follow{% endif %}"
+                    method="POST", style="display:inline;" role="form" novalidate>
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link" style="font-size: 8pt;padding: 0;">{% if user in question.followers.all %}Un-follow{% else %}Follow{% endif %}</button>
+                </form>
             </small>
         </div><!-- end .question-detail -->
     </div>

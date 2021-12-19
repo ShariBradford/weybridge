@@ -485,3 +485,11 @@ ul#id_number_of_stars li input:checked {
 .card:hover .edit-button {
     opacity: 1;
 }
+
+.questions-followed .product-info img,
+.questions-asked .product-info img,
+.questions-answered .product-info img{
+    width: 80px;
+    border: 1pt solid lightgray;
+    margin: 0 10px 0 0;
+}

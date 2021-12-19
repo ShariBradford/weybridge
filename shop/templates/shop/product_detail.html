@@ -164,6 +164,7 @@
                 </p>
                 <p>SKU: <small class="text-muted">{{ product.sku }}</small></p>
                 <p>{% if product.inventory_stock %}In Stock.{% else %}<span style="color:red;">SOLD OUT</span>{% endif %}</p>
+                {% if product.size_chart %}<p><a href="{{ product.size_chart.url }}">Size Chart</a></p>{% endif %}
                 <p class="my-2">
                     <span class="rating-number" data-rating="{{average_rating|stringformat:'.2F'}}" data-rating-size="medium"></span> 
                     <a href="#ratings">Reviews</a>

@@ -88,5 +88,9 @@ urlpatterns = [
     path('favorites/', views.FavoriteProductList.as_view(), name="favorite_products"),
     path('rating/<int:rating_id>/vote/<negint:score>', views.rating_vote, name="rating_vote"),
     path('question/<int:question_id>/answer', views.answer_question, name="answer_question"),
+    path('question/<int:question_id>/follow', views.follow_question, name="follow_question"),
+    path('question/<int:question_id>/unfollow', views.unfollow_question, name="unfollow_question"),
+    path('contact/', views.ContactCreate.as_view(), name='contact-us'),
+    # path('contact/success/',views.ContactSuccess.as_view(),'contact-success'),
     # path('test/', views.test, name="test"),
 ]

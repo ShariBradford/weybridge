@@ -1,22 +1,46 @@
 {% load static humanize shop_extras %}
 <div class="container products">
-    <div class="new-item row"><!-- id="new-item"> -->
+    <div class="new-item row">
+
         <div class="new-item-button">
-          {% if request.user.is_staff %}
-          <a href="{% url 'shop:product_add' %}" class="btn btn-info"><small><i class="fas fa-plus-circle"></i> New</small></a> 
-          {% endif %}
+            {% if request.user.is_staff %}
+
+                {% if category_id %}  
+                <a href="{% url 'shop:product_add' %}?{{ categories_query_string }}" class="btn btn-info" title="Add a product to this category">
+                    <small>
+                        <i class="fas fa-plus-circle"></i>
+                         New
+                    </small>
+                </a> 
+                {% elif collection_id %}  
+                <a href="{% url 'shop:product_add' %}?collection_id={{ collection_id }}" class="btn btn-info" title="Add a product to this collection">
+                    <small>
+                        <i class="fas fa-plus-circle"></i>
+                         New
+                    </small>
+                </a> 
+                {% else %}
+                <a href="{% url 'shop:product_add' %}" class="btn btn-info" title="Add">
+                    <small>
+                        <i class="fas fa-plus-circle"></i>
+                         New
+                    </small>
+                </a> 
+                {% endif %}
+
+            {% endif %}
         </div>
         <div class="dropdown sort-dropdown">
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Sort by
+                Sort by
             </button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item{% if sort_by == 'mostPopular' %} active{% endif %}" href="?sort_by=mostPopular">Most Popular</a>
-              <a class="dropdown-item{% if sort_by == 'priceLowToHigh' %} active{% endif %}" href="{% querystring sort_by='priceLowToHigh' %}">Price (Low to High)</a>
-              <a class="dropdown-item{% if sort_by == 'priceHighToLow' %} active{% endif %}" href="{% querystring sort_by='priceHighToLow' %}">Price (High to Low)</a>
-              <a class="dropdown-item{% if sort_by == 'aToZ' %} active{% endif %}" href="{% querystring sort_by='aToZ' %}">A to Z</a>
-              <a class="dropdown-item{% if sort_by == 'zToA' %} active{% endif %}" href="{% querystring sort_by='zToA' %}">Z to A</a>
-              <a class="dropdown-item{% if sort_by == 'new' %} active{% endif %}" href="{% querystring sort_by='new' %}">New</a>
+                <a class="dropdown-item{% if sort_by == 'mostPopular' %} active{% endif %}" href="?sort_by=mostPopular">Most Popular</a>
+                <a class="dropdown-item{% if sort_by == 'priceLowToHigh' %} active{% endif %}" href="{% querystring sort_by='priceLowToHigh' %}">Price (Low to High)</a>
+                <a class="dropdown-item{% if sort_by == 'priceHighToLow' %} active{% endif %}" href="{% querystring sort_by='priceHighToLow' %}">Price (High to Low)</a>
+                <a class="dropdown-item{% if sort_by == 'aToZ' %} active{% endif %}" href="{% querystring sort_by='aToZ' %}">A to Z</a>
+                <a class="dropdown-item{% if sort_by == 'zToA' %} active{% endif %}" href="{% querystring sort_by='zToA' %}">Z to A</a>
+                <a class="dropdown-item{% if sort_by == 'new' %} active{% endif %}" href="{% querystring sort_by='new' %}">New</a>
             </div>
         </div>        
     </div>

@@ -1,12 +1,14 @@
+from urllib.parse import urlencode
 from datetime import datetime,timezone,timedelta
 
-
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.core import serializers
+from django.core.mail import send_mail
 from django.db.models import (
     OuterRef, Subquery, Avg, F, Q, Count, Min, FilteredRelation, Value, IntegerField, 
     CharField, BooleanField, Case, When)
@@ -16,11 +18,15 @@ from django.shortcuts import render, redirect, reverse, get_object_or_404,HttpRe
 from django.urls import reverse_lazy
 from django.views.generic import ListView,DetailView
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 
 from ipware import get_client_ip
 
 from .models import *
+from .services import (
+    RecentlyViewedItems, get_product_rating_for_user, get_category_parent,
+    get_category_children, get_category_list, get_categories
+)
 
 category_qs = Category.objects.all()
 throw_away_var = len(category_qs)   #force evaluation of queryset
@@ -41,117 +47,119 @@ class StaffMemberRequiredMixin(UserPassesTestMixin):
 def test(request):
     return render(request, 'shop/test.html', {'test': 'Testing 123'})
 
-def get_category_parent(category_id):
-    '''
-        Returns an ordered list of category ids for all category 'ancestors'.
-        Ancestors are the parent_category for the category_id param, plus the parent's parent, etc.
-        The returned list includes the category_id param as its first item.
-    '''
-    category = Category.objects.get(id=category_id)
-    parent = category.parent_category_id or None
-    list = []
-    if parent:
-        list.extend(get_category_parent(parent))
-    list.append(category_id)
-    return list
+# def get_category_parent(category_id):
+#     '''
+#         Returns an ordered list of category ids for all category 'ancestors'.
+#         Ancestors are the parent_category for the category_id param, plus the parent's parent, etc.
+#         The returned list includes the category_id param as its first item.
+#     '''
+#     category = Category.objects.get(id=category_id)
+#     parent = category.parent_category_id or None
+#     list = []
+#     if parent:
+#         list.extend(get_category_parent(parent))
+#     list.append(category_id)
+#     return list
     
-def get_category_children(category_id):
-    '''
-        Returns an ordered list of category ids for all categories that are children of the category_id param.
-        The returned list include the category_id param as its first item.
-        Different from category.child_categories in that the list is ordered and it includes the category_id param as its first item.
-    '''
-    children = Category.objects.filter(parent_category = category_id)
-    list = []
-    if children:
-        for child in children:
-            list.extend(get_category_children(child.id))
-    list.append(category_id)
-    return list
+# def get_category_children(category_id):
+#     '''
+#         Returns an ordered list of category ids for all categories that are children of the category_id param.
+#         The returned list include the category_id param as its first item.
+#         Different from category.child_categories in that the list is ordered and it includes the category_id param as its first item.
+#     '''
+#     children = Category.objects.filter(parent_category = category_id)
+#     list = []
+#     if children:
+#         for child in children:
+#             list.extend(get_category_children(child.id))
+#     list.append(category_id)
+#     return list
 
-def get_category_list(parent_category_id):
-    strHTML = ''
-    # children = Category.objects.filter(parent_category = parent_category_id).order_by('name')
-    children = category_qs.filter(parent_category = parent_category_id).order_by('name')
-    if children:
-        for child in children:
-            id_str = child.name.replace('\\','').replace(' ','_').replace('\'','').lower()
-            category_products_url = reverse('shop:category_products', kwargs={'category_id': child.id})
-            strHTML += f'<div class="category" id="category-{id_str}">'
-            strHTML += f'<a href="{category_products_url}">'
-            strHTML += child.name
-            strHTML += '</a>'
-            strHTML += get_category_list(child.id) 
-            strHTML += '</div>'    
+# def get_category_list(parent_category_id):
+#     strHTML = ''
+#     # children = Category.objects.filter(parent_category = parent_category_id).order_by('name')
+#     children = category_qs.filter(parent_category = parent_category_id).order_by('name')
+#     if children:
+#         for child in children:
+#             id_str = child.name.replace('\\','').replace(' ','_').replace('\'','').lower()
+#             category_products_url = reverse('shop:category_products', kwargs={'category_id': child.id})
+#             strHTML += f'<div class="category" id="category-{id_str}">'
+#             strHTML += f'<a href="{category_products_url}">'
+#             strHTML += child.name
+#             strHTML += '</a>'
+#             strHTML += get_category_list(child.id) 
+#             strHTML += '</div>'    
 
-    return strHTML.replace('\\','')  
+#     return strHTML.replace('\\','')  
 
-def get_categories(parent_category_id,level=0):
-    categories = []
+# def get_categories(parent_category_id,level=0):
+#     categories = []
     
-    for current_category in category_qs.filter(parent_category = parent_category_id).annotate(
-        indent_level=Value(level, IntegerField()),
-        indent_px=Value(f"{level*20}px", CharField()),
-    ).order_by('name'):
-        categories.append(current_category) 
-        for child_category in get_categories(current_category.id, level+1):
-            categories.append(child_category)
+#     for current_category in category_qs.filter(parent_category = parent_category_id).annotate(
+#         indent_level=Value(level, IntegerField()),
+#         indent_px=Value(f"{level*20}px", CharField()),
+#     ).order_by('name'):
+#         categories.append(current_category) 
+#         for child_category in get_categories(current_category.id, level+1):
+#             categories.append(child_category)
 
-    return categories    
+#     return categories    
 
-def get_product_rating_for_user(user, object):
-    # returns information about whether the user has rated a particular product
+# def get_product_rating_for_user(user, object):
+#     # returns information about whether the user has rated a particular product
  
-    if hasattr(object,'ratings'):
+#     if hasattr(object,'ratings'):
+#         all_ratings = object.ratings.all()
 
-        if user.is_authenticated == False:
-            # user is anonymous, so user has not yet rated item yet
-            user_has_rated_item = False
-            user_rating_this_item = None
-            form = RatingForm()
+#         if user.is_authenticated == False:
+#             # user is anonymous, so user has not yet rated item yet
+#             user_has_rated_item = False
+#             user_rating_this_item = None
+#             form = RatingForm()
 
-        # determine if this user has rated this item before
-        elif object.ratings.filter(user=user).count() > 0:
-            #user hsa rated item; don't permit another rating (just don't return a form object)
-            # print(f"Ratings for {object}: {object.ratings.filter(user=user).count()}")
-            user_has_rated_item = True
-            user_rating_this_item = object.ratings.filter(user=user).first()
-            form = None
+#         # determine if this user has rated this item before
+#         elif all_ratings.filter(user=user).count() > 0:
+#             #user hsa rated item; don't permit another rating (just don't return a form object)
+#             # print(f"Ratings for {object}: {all_ratings.filter(user=user).count()}")
+#             user_has_rated_item = True
+#             user_rating_this_item = all_ratings.filter(user=user).first()
+#             form = None
 
-        else:
-            # user has not yet rated this item
-            user_has_rated_item = False
-            user_rating_this_item = None
-            form = RatingForm()
+#         else:
+#             # user has not yet rated this item
+#             user_has_rated_item = False
+#             user_rating_this_item = None
+#             form = RatingForm()
 
-        #get the oversall ratings for this item
-        # average_rating = Rating.objects.filter(dish=dish).aggregate(Avg('number_of_stars'))['number_of_stars__avg'] or 0
-        average_rating = object.ratings.aggregate(Avg('number_of_stars'))['number_of_stars__avg'] or 0
+#         # #get the oversall ratings for this item
+#         # average_rating = object.ratings.aggregate(Avg('number_of_stars'))['number_of_stars__avg'] or 0
         
-        upvotes = Count('votes__score_type', filter=Q(votes__score_type=1))
-        downvotes = Count('votes__score_type', filter=Q(votes__score_type=-1))
-        all_ratings = object.ratings.annotate(upvotes=upvotes).annotate(downvotes=downvotes).order_by('-created_at')       
-        # all_ratings = object.ratings.all()
+#         # upvotes = Count('votes__score_type', filter=Q(votes__score_type=1))
+#         # downvotes = Count('votes__score_type', filter=Q(votes__score_type=-1))
+#         # all_ratings = object.ratings.annotate(upvotes=upvotes).annotate(downvotes=downvotes).order_by('-created_at')       
 
-    else:
-        # item has no ratings yet
-        print(f"No ratings yet for {object}.")
-        form = RatingForm()
-        average_rating = 0
-        all_ratings = None
+#     else:
+#         # item has no ratings yet
+#         print(f"No ratings yet for {object}.")
+#         form = RatingForm()
+#         average_rating = 0
+#         all_ratings = None
 
-    rating_info = {
-        'user': user,
-        'object': object,
-        'average_rating': average_rating,
-        'all_ratings': all_ratings,
-        'user_has_rated_item': user_has_rated_item,
-        'user_rating_this_item': user_rating_this_item,
-        'form': form,
-    }
-    return rating_info
+#     rating_info = {
+#         'user': user,
+#         'object': object,
+#         # 'average_rating': average_rating,
+#         # 'all_ratings': all_ratings,
+#         'user_has_rated_item': user_has_rated_item,
+#         'user_rating_this_item': user_rating_this_item,
+#         'form': form,
+#     }
+#     return rating_info
 
 def get_breadcrumbs(page_type,item_id, breadcrumb_name=None):
+    """
+        Returns breadcrumbs for pages based on page type, item on page, etc.
+    """
     home = {
         'type':'home',
         'id': 0,
@@ -354,10 +362,52 @@ def ajax_unfavorite(request, product_id):
     # return the user to the same page they were on when they favorited the item
     return redirect(request.META.get('HTTP_REFERER'))
 
-class RecentlyViewedMixin(object):
-    # maximum number of products to show in recently viewed list
-    max = recently_viewed_max
+
+@login_required
+def follow_question(request, question_id):
+    user = request.user
+    next = request.GET.get('next', request.META.get('HTTP_REFERER'))
+    # print(f"{user.first_name} wants to follow question id #{question_id} and then go to this link: {next}")
+
+    if request.method == 'POST':
+        try:
+            question = Question.objects.get(id=question_id)
     
+            # adding a second time is OK, it will not duplicate the relation
+            question.followers.add(user)
+            # print(f"Success!")
+
+        except Question.DoesNotExist:
+            # print(f"Question ID #{question_id} does not exist. Returning {user.first_name} to link: {next}")
+            return redirect(next)
+        
+    return redirect(next)
+
+@login_required
+def unfollow_question(request, question_id):
+    user = request.user
+    next = request.GET.get('next', request.META.get('HTTP_REFERER'))
+    # print(f"{user.first_name} wants to UN-follow question id #{question_id} and then go to this link: {next}")
+
+    if request.method == 'POST':
+        try:
+            question = Question.objects.get(id=question_id)
+    
+            question.followers.remove(user)
+            # print(f"Success!")
+
+        except Question.DoesNotExist:
+            # print(f"Question ID #{question_id} does not exist. Returning {user.first_name} to link: {next}")
+            return redirect(next)
+        
+    return redirect(next) 
+
+class RecentlyViewedMixinOLD(object):
+    # maximum number of products to show in recently viewed list
+    # max = recently_viewed_max
+    max = settings.SHOP_RECENTLY_VIEWED_MAX_ITEMS
+    session_key = settings.SHOP_RECENTLY_VIEWED_SESSION_KEY
+
     def get_recently_viewed_products(self, **kwargs):
         #  GET RECENTLY VIEWED PRODUCTS
 
@@ -366,7 +416,7 @@ class RecentlyViewedMixin(object):
         list_order = 'id'
 
         try:
-            recently_viewed = self.request.session['recently_viewed']
+            recently_viewed = self.request.session[self.session_key]
             # print(f"Recent: {Product.objects.filter(id__in = recently_viewed)}")
             
             # specify the order of the queryset according to the recently_viewed array
@@ -400,13 +450,70 @@ class RecentlyViewedMixin(object):
 
         return products
 
+class RecentlyViewedMixin(object):
+
+    def get_recently_viewed_products(self, **kwargs):
+        #  GET RECENTLY VIEWED PRODUCTS
+
+        current_item_id = kwargs.get('current_item_id', None)
+        remove_current_item = kwargs.get('remove_current_item', False)
+        list_order = 'id'
+
+        if current_item_id:
+            # print(f'Starting  get_recently_viewed_products. Request:')
+            # print(f'{self.request.session.__dict__}')
+            recently_viewed = RecentlyViewedItems.update(self.request, current_item_id)
+
+            # if remove_current_item:
+            #     # print(f'This object ({obj.id}) already in recently viewed items ({recently_viewed})')
+            #     recently_viewed.remove(current_item_id)
+            #     # print(f"Recent (after removing current item): {Product.objects.filter(id__in = recently_viewed)}")
+
+        else:
+            recently_viewed = RecentlyViewedItems.get(self.request)
+        # print(f"Recent: {Product.objects.filter(id__in = recently_viewed)}")
+            
+        # specify the order of the queryset according to the recently_viewed array
+        list_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(recently_viewed)])
+        # reference 'django models conditional expressions' for info on Case and When
+        # print(f"List Order: {list_order}")
+
+        products = Product.objects.filter(id__in = recently_viewed).order_by(list_order)
+
+        return products
+
 class RecentProductsView(StaffMemberRequiredMixin, RecentlyViewedMixin,TemplateView):
     template_name = 'shop/recent_products.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['recently_viewed_items'] = self.get_recently_viewed_products()
+        context['recently_viewed_items'] = self.get_recently_viewed_products(**kwargs)
         return context
+
+class ContactCreate(CreateView):
+    model = Contact
+    form_class = ContactForm
+    success_url = reverse_lazy('shop:contact-us')
+    
+    def form_valid(self, form):
+        kwargs = self.get_form_kwargs()
+
+        message = f"{form.cleaned_data.get('from_email')} said: "
+        message += f"\n\n{form.cleaned_data.get('message')}"
+        subject = f"Contact Form: {form.cleaned_data.get('subject').strip()}"
+
+        send_mail(
+            subject= subject,
+            message=message,
+            from_email='support@weybridgeonline.com',
+            recipient_list=['shari.bradford@gmail.com'],
+        )
+        # form.instance.created_by = self.request.user
+        # form.instance.updated_by = self.request.user
+        messages.success(self.request,"Thank you for your inquiry!")
+        response = super().form_valid(form)
+
+        return response
 
 class ProductList(ListView):
     model = Product
@@ -481,23 +588,15 @@ class ProductDetail(RecentlyViewedMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
+        all_ratings = self.object.get_ratings_with_votes()
+        average_rating = all_ratings.aggregate(Avg('number_of_stars'))['number_of_stars__avg'] or 0
         rating_info = get_product_rating_for_user(self.request.user,self.object)
         # print(f"Rating information for {self.object}:")
         # print(f"{rating_info}")
-        # print(f'User Rating: {context["user_rating_this_item"].number_of_stars or None}')   
-
-        # context['average_rating'] = rating_info['average_rating']
-        # context['all_ratings'] = rating_info['all_ratings']
-        # context['user_has_rated_item'] = rating_info['user_has_rated_item']
-        # context['user_rating_this_item'] = rating_info['user_rating_this_item']
-        # context['form'] = rating_info['form']
-        # context['question_form'] = QuestionForm()
-        # context['answer_form'] = AnswerForm()
-        # context['categories'] = " | ".join(list(category.name for category in self.object.categories.all()))
 
         context.update({
-            'average_rating': rating_info['average_rating'],
-            'all_ratings': rating_info['all_ratings'],
+            'average_rating': average_rating, # rating_info['average_rating'],
+            'all_ratings': all_ratings, #rating_info['all_ratings'],
             'user_has_rated_item': rating_info['user_has_rated_item'],
             'user_rating_this_item': rating_info['user_rating_this_item'],
             'form': rating_info['form'],
@@ -506,50 +605,12 @@ class ProductDetail(RecentlyViewedMixin, DetailView):
             'categories': " | ".join(list(category.name for category in self.object.categories.all())),
             'breadcrumbs': get_breadcrumbs('product',self.object.id),
         })
+        # print(f'User Rating: {context["user_rating_this_item"].number_of_stars or None}')   
         
-        #  GET RECENTLY VIEWED PRODUCTS
-
-        # Don't show the current item in recently viewed.
-        # Put the recently_viewed items in the context before adding the current item to recently_viewed.
         obj = self.object
-        # try:
-        #     recently_viewed = self.request.session['recently_viewed']
-        #     # print(f"Recent: {Product.objects.filter(id__in = recently_viewed)}")
-            
-        #     # specify the order of the queryset according to the recently_viewed array
-        #     list_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(recently_viewed)])
-        #     # reference 'django models conditional expressions' for info on Case and When
-
-        #     # print(f"List Order: {list_order}")
-
-        #     # if the item is already in the list, remove it.
-        #     if obj.id in recently_viewed:
-        #         # print(f'This object ({obj.id}) already in recently viewed items ({recently_viewed})')
-        #         recently_viewed.remove(obj.id)
-        #         # print(f"Recent (after removing current item): {Product.objects.filter(id__in = recently_viewed)}")
-        #         context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
-
-        #     elif len(recently_viewed) > recently_viewed_max:
-        #         # print(f'Too many items in recently viewed items ({len(recently_viewed)})')
-        #         # check if recently_viewed has equal to or more than the maximum number of items
-        #         # if so, delete the last one 
-        #         context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
-        #         del recently_viewed[-1]
-        #         # print(f"Recent (after resizing list): {Product.objects.filter(id__in = recently_viewed)}")            
-
-        #     else:
-        #         context['recently_viewed_items'] = Product.objects.filter(id__in = recently_viewed).order_by(list_order)[0:4]
-
-        #     # insert this item at the front of the recently_viewed list
-        #     recently_viewed.insert(0,obj.id)
-        #     # print(f"Recently viewed items (after adding current item): {recently_viewed}") # {Product.objects.filter(id__in = recently_viewed)}")
-
-        # except KeyError:
-        #     recently_viewed = [obj.id]
-            
-        # # Add recently viewed items to the session variable
-        # self.request.session['recently_viewed'] = recently_viewed
-        context['recently_viewed_items'] = self.get_recently_viewed_products(current_item_id=obj.id,remove_current_item=True)[0:4]
+        #  GET RECENTLY VIEWED PRODUCTS
+        # Don't show the current item in recently viewed.
+        context['recently_viewed_items'] = self.get_recently_viewed_products(current_item_id=obj.id,remove_current_item=True)[1:]
 
         return context
 
@@ -557,6 +618,21 @@ class ProductCreate(StaffMemberRequiredMixin, CreateView):
     model = Product
     form_class = ProductFormWithImages
     
+    def get_initial(self):
+        initial = super().get_initial()
+        
+        if category_ids := self.request.GET.getlist('category_id',None):
+            # print(f'Category: {category_ids}')
+            initial['categories'] = [int(category_id) for category_id in category_ids if category_id.isnumeric()]
+
+        elif collection_id := self.request.GET.getlist('collection_id',None):
+            initial['collection'] = collection_id
+
+        else:
+            pass
+
+        return initial
+
     def form_valid(self, form):
         kwargs = self.get_form_kwargs()
         files = kwargs['files']
@@ -568,11 +644,14 @@ class ProductCreate(StaffMemberRequiredMixin, CreateView):
 
         if images:
             for image in images:
-                i = ProductPhoto(product=self.object,picture=image)
+                is_default = image == images[0]
+                i = ProductPhoto(product=self.object,picture=image,is_default=is_default)
                 i.save()
+
         else:
-            # no files uploaded so add default product photo
-            i = ProductPhoto(product=self.object)
+            # no files uploaded so add default generic product photo
+            # also make this photo thedeafult of all in the photos for this product
+            i = ProductPhoto(product=self.object, is_default=True)
             i.save()
             
         # return super().form_valid(form)
@@ -632,14 +711,22 @@ class ProductDelete(StaffMemberRequiredMixin, DeleteView):
 def product_photo_delete(request, product_photo_id):
     product_photo = ProductPhoto.objects.get(id=product_photo_id)
     product = product_photo.product 
+    is_default = product_photo.is_default or False
 
     if request.method == 'POST':        
         product_photo.delete()
-        # return a list of the remaining product photos so that te images can be redisplayed in the container
+        
+        if is_default:
+            print('The deleted photo was the default. We need to make another photo default, if any exists.')
+            first_photo = product.product_photos.first()
+            first_photo.is_default=True
+            first_photo.save()
 
+    # return a list of the remaining product photos so that te images can be redisplayed in the container
     context = {
         'images': product.product_photos.all(),
     }
+
     return render(request,'shop/existing-images.html', context)
 
 def product_photo_make_primary(request, product_photo_id):
@@ -673,6 +760,13 @@ class SaleList(StaffMemberRequiredMixin, ListView):
 
 class SaleDetail(StaffMemberRequiredMixin, DetailView):
     model = Sale
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        last_promotion_added_on = self.object.promotions.values('created_at').latest('created_at')['created_at']
+        context.update({'last_promotion_added_on' : last_promotion_added_on})
+        return context
 
 class SaleCreate(StaffMemberRequiredMixin, CreateView):
     model = Sale
@@ -722,9 +816,17 @@ class PromotionCreate(StaffMemberRequiredMixin, CreateView):
         #     product = None
 
         sale_id = self.request.GET.get('sale_id',None)
-        print(f'Sale ID: {sale_id}')
+        # print(f'Initial Sale ID: {sale_id}')
 
         return {'product':product_pk, 'sale': sale_id}
+
+    def get_success_url(self) -> str:
+        
+        if self.object.sale_id:
+            print(f'Success URL Sale ID: {self.object.sale_id}')
+            return reverse('shop:sale_details', kwargs={'pk': self.object.sale_id})
+       
+        return super().get_success_url()
 
     # def get_context_data(self, **kwargs):
     #     context = super().get_context_data(**kwargs)
@@ -821,8 +923,16 @@ class CategoryProductList(ProductList):
 
         # get all child categories so that you can display products from this category and its subcategories
         self.categories_list = get_category_children(self.category.id)
+        
+        # get all parent categories and pass to template as a query string.
+        # The query string will be used with the new product button url so that the initial valuue of 
+        # the categories field on the new product form will be populated by the same categories. 
+        category_parents = get_category_parent(self.category.id)
+        self.categories_query_string = urlencode({'category_id': category_parents}, doseq=True)
+
         # print(f"Category: {self.category.name}")
         # print(f"Category Hierarchy: {self.categories_list}")
+        # print(f"Category List URLEncoded: {self.categories_query_string}")
 
         return qs.filter(categories__id__in = self.categories_list)
 
@@ -832,6 +942,8 @@ class CategoryProductList(ProductList):
         # Add in the category and breadcrumbs
         context.update({
             'category': self.category,
+            'categories': self.categories_list,
+            'categories_query_string': self.categories_query_string,
             'breadcrumbs': get_breadcrumbs('category',self.category.id),
         })
         # context['category'] = self.category
@@ -1028,6 +1140,11 @@ def answer_question(request, question_id):
     return render(request, 'shop/question.html', context)
 
 def get_product_info(request, product_id):
+    """
+        Returns json-formatted information about product object
+        or HTTPResponseNotAllowed if not a POST request.
+    """
+
     if request.method == 'POST':
         # data = serializers.serialize('json', Product.objects.filter(id=product_id).prefetch_related('product_photos'))
         product = Product.objects.get(id=product_id)
@@ -1044,6 +1161,11 @@ def get_product_info(request, product_id):
     return HttpResponseNotAllowed(['POST'])
 
 def get_sale_info(request, sale_id):
+    """
+        Returns json-formatted information about sale object
+        or HTTPResponseNotAllowed if not a POST request.
+    """
+
     if request.method == 'POST':
         sale = Sale.objects.get(id=sale_id)
         data = {
@@ -1058,6 +1180,11 @@ def get_sale_info(request, sale_id):
 
 @staff_member_required
 def clear_recent(request):
-    request.session['recently_viewed'] = []
+    """
+        Clears recently_viewed list in session
+    """
+
+    # request.session['recently_viewed'] = []
+    RecentlyViewedItems.clear(request)
     print(f"Recently viewed items: {request.session['recently_viewed']}")
     return redirect('/')

@@ -40,78 +40,158 @@
 
 {% block content %}
 <div id="main-content">
+    <div class="header mb-4">
+        <div  class="d-flex flex-column align-items-center mb-4" id="profilePic">
+            <img src="{{ profiled_user.profile.profile_pic.url }}" alt="User Profile Picture">
+
+            <h3 class="my-0" style="font-weight:bold;font-size: 14pt;">{{ profiled_user.first_name }} {{ profiled_user.last_name }}</h3>
+            {% if profiled_user.id == user.id and profiled_user.email %}
+            <p class="my-0"><small style="color:gray">{{ profiled_user.email }}</small></p>
+            {% endif %}
+            {% if profiled_user.id == user.id %}
+            <p class="edit-profile mb-0" title="Edit" style="color:#009EC3">
+                <a href="{% url 'accounts:update_user_profile' profiled_user_id=profiled_user.id %}">
+                    <small><i class="fas fa-pen"></i> Edit</small>
+                </a>
+            </p>
+            {% endif %}
+
+        </div>
+
+        <div class="d-flex flex-column align-items-center" id="userInfo">
+            <!-- Display User Info (Name, Bio, Location, Avg. Rating) -->
+            <p class="my-0" style="font-weight: bold;">ABOUT</p>
+            
+            {% if profiled_user.profile.bio %}
+            <div class="bio">{{ profiled_user.profile.bio|linebreaks }}</div>
+            {% endif %}
+
+            <p><i class="fas fa-map-marker-alt"></i> {{ profiled_user.profile.location|default:"somewhere out there"|default_if_none:"somewhere out there" }}</p>
+            
+            {% if profiled_user.profile.birthday %}
+            <p><i class="fas fa-birthday-cake"></i> {{ profiled_user.profile.birthday }}</p>
+            {% endif %}
+        </div>
+
+    </div>
+
     <div class="row" id="newPost">
-        <div class="col-4">
-            <div id="profilePic">
-                <h4>{{ profiled_user.first_name }} {{ profiled_user.last_name }}</h4>
+        <div class="col-6">
 
-                {% if profiled_user.id == user.id %}
-                <p class="edit-profile ml-2" title="Edit" style="color:#009EC3">
-                    <a href="{% url 'accounts:update_user_profile' profiled_user_id=profiled_user.id %}">
-                        <small><i class="fas fa-pen"></i> Edit</small>
-                    </a>
-                </p>
-                {% endif %}
-
-                <img src="{{ profiled_user.profile.profile_pic.url }}" alt="User Profile Picture">
-                <!-- Display User Profile Image (if none Display Default Image) -->
-            </div>
-            <div id="userInfo">
-                <!-- Display User Info (Name, Bio, Location, Avg. Rating) -->
-                <h4>Bio: <div class="bio">{{ profiled_user.profile.bio }}</div>
-                </h4>
-                <h4>Location: {{ profiled_user.profile.location }}</h4>
-                <h4>Birthday: {{ profiled_user.profile.birthday }}</h4>
-                <h4>Average Rating: {{ user_average_rating }}</h4>
-            </div>
-
-            <div class="ratings">
+            <div class="ratings my-3">
+                <h5 class="mb-0" style="line-height: .9;">Products You've Rated</h5>
+                <small class="" style="margin: 0 0 10px 0;">Average Rating: {{ user_average_rating|default_if_none:"No ratings yet" }}</small>
+                
                 {% for rating in all_ratings %}
-                <div class="rating">
-                    <div class="dish">
-                        <a href="{% url 'shop:product_details' pk=rating.product.id %}">
-                            <img src="{{ rating.product.product_photos.first.picture.url }}" alt="Picture of category {{ rating.dish.name }}">
-                            <p>{{ rating.dish.title }}</p>
-                        </a>
-                        {% include 'shop/stars.html' with size="small" %}
-                        <h6>
-                            <a href="{% url 'accounts:user_profile' profiled_user_id=rating.user.id %}">
-                                {{ rating.user.first_name }} {{ rating.user.last_name }}
-                            </a>
-                        </h6>
-                        <p>{{ rating.review }}</p>
-                        <p>{{ rating.created_at }}</p>
+                <div class="rating d-flex mb-3" id="rating-{{rating.id}}">
+                    <a href="{% url 'shop:product_details' pk=rating.product.id %}">
+                        <img src="{{ rating.product.product_photos.first.picture.url }}" style="width:80px;" alt="{{ rating.product.name }}">
+                    </a>
+
+                    <div class="my-0 ml-3">
+                        <p class="text-muted">
+                            <a href="{% url 'shop:product_details' pk=rating.product.id %}">{{ rating.product.name }}</a>
+                        </p>
+                        <p class="my-0">
+                            {% include 'shop/stars.html' with size="small" %}
+                        </p>
+                        <p class="my-0">{{ rating.review }}</p>
+                        <small class="my-0 text-muted">{{ rating.created_at|date:"M. j, Y" }}</small>
                     </div>
 
                 </div><!-- end .rating -->
                 {% endfor %}
+
             </div><!-- end .ratings -->
+        </div><!-- end .col-6 -->
 
-        </div>
-        <div class="dishes col-8">
-            <div id="header">
-                <h4>Side Bar</h4>
-            </div>
-            <div id="dishes">
-                <!--Dispaly All User Post-->
-                {% for dish in profiled_user.user_dishes.all %}
-                <div class="dish" id="{{ dish.name }}" data-id="{{ dish.id }}">
-                    <a href="/dish/{{ dish.id }}">
-                        <img src="{{ dish.profile_pic.url }}" alt="Picture of category {{ dish.name }}">
-                        <h5>{{ dish.title }}</h5>
-                        {% if dish.poster.id == user.id %}
-                        <p class="edit-dish" title="Edit" style="color:#009EC3">
-                            <a href="">
-                                <small><i class="fas fa-pen"></i> Edit</small>
-                            </a>
-                        </p>
-                        {% endif %}
-                    </a>
-                </div>
+        <div class="col-6">
+            <div class="questions-asked mb-4">
+                <!-- Display all questions that user has asked  -->
 
+                <h5>Questions You've Asked</h5>
+                {% regroup all_questions_asked by product as asked_questions_by_product %}
+
+                {% for product, asked_questions_list in asked_questions_by_product %}    
+                <div class="asked-questions mt-3" style="border:1px solid gray;padding:0;border-radius:10px;">
+
+                    <div class="product-info" id="product-{{ product.id }}" style="background-color: lightgrey;padding:10px;border-radius: 10px 10px 0 0;">
+                        <a href="{% url 'shop:product_details' pk=product.id %}" class="d-inline-flex justify-content-start align-items-center">
+                            <img src="{{ product.get_default_photo_url }}" alt="Picture of product {{ product.name }}">
+                            <span style="text-transform: uppercase;">{{ product.name }}</span>
+                        </a>
+                    </div><!-- end .product-info -->
+
+                    <div class="product-questions" style="padding:10px;">
+                    {% for question in asked_questions_list %}
+                        {% include 'shop/question.html' %}
+                    {% endfor %}
+                    </div><!-- end .product-questions -->
+
+                </div><!-- end .asked-questions -->
                 {% endfor %}
 
-            </div>
-        </div>
+            </div><!-- end .questions-asked -->
+
+            <div class="questions-answered mb-4">
+                <!-- Display all questions that user has answered  -->
+
+                <h5>Questions You've Answered</h5>
+                {% regroup all_answers by question.product as answers_by_product %}
+
+                {% for product, answers_list in answers_by_product %}    
+                <div class="answered-questions mt-3" style="border:1px solid gray;padding:0;border-radius:10px;">
+
+                    <div class="product-info" id="product-{{ product.id }}" style="background-color: lightgrey;padding:10px;border-radius: 10px 10px 0 0;">
+                        <a href="{% url 'shop:product_details' pk=product.id %}" class="d-inline-flex justify-content-start align-items-center">
+                            <img src="{{ product.get_default_photo_url }}" alt="Picture of product {{ product.name }}">
+                            <span style="text-transform: uppercase;">{{ product.name }}</span>
+                        </a>
+                    </div><!-- end .product-info -->
+
+                    <div class="product-questions" style="padding:10px;">
+                    {% regroup answers_list by question as answered_questions_list %}
+
+                        <!-- ADD BACK QUESTIONS ITERATOR HERE -->
+                        {% for question, answer in answered_questions_list %}
+                            {% include 'shop/question.html' %}
+                        {% endfor %}
+
+                    </div><!-- end .product-questions -->
+
+                </div><!-- end .answered-questions -->
+                {% endfor %}
+
+            </div><!-- end .questions-answered -->
+
+            <div class="questions-followed">
+                <!-- Display all questions that user is following  -->
+
+                <h5>Questions You're Following</h5>
+                {% regroup all_questions_followed by product as followed_questions_by_product %}
+
+                {% for product, followed_questions_list in followed_questions_by_product %}    
+                <div class="followed-questions mt-3" style="border:1px solid gray;padding:0;border-radius:10px;">
+
+                    <div class="product-info" id="product-{{ product.id }}" style="background-color: lightgrey;padding:10px;border-radius: 10px 10px 0 0;">
+                        <a href="{% url 'shop:product_details' pk=product.id %}" class="d-inline-flex justify-content-start align-items-center">
+                            <img src="{{ product.get_default_photo_url }}" alt="Picture of product {{ product.name }}">
+                            <span style="text-transform: uppercase;">{{ product.name }}</span>
+                        </a>
+                    </div><!-- end .product-info -->
+
+                    <div class="product-questions" style="padding:10px;">
+                    {% for question in followed_questions_list %}
+                        {% include 'shop/question.html' %}
+                    {% endfor %}
+                    </div><!-- end .product-questions -->
+
+                </div><!-- end .followed-questions -->
+                {% endfor %}
+
+            </div><!-- end .questions-followed -->
+
+        </div><!-- end .col-6 -->
+    </div>
 </div>    
 {% endblock %}

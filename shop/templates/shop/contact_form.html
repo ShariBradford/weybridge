@@ -1,19 +1,47 @@
 {% extends 'shop/base.html' %}
-{% load static humanize %}
-
+{% load static shop_extras %}
 {% block css %}
-<link rel="stylesheet" href="{% static 'shop/css/createCategory.css' %}">
+<link rel="stylesheet" href="{% static 'shop/css/favorites.css' %}">
 {% endblock css %}
 
+{% block greeting %}{% if user.is_authenticated %} {{ user.first_name }}{% else %}{% endif %}{% endblock greeting %}
+
+{% block favorites %}
+{% if user.is_authenticated %}
+<a href="{% url 'shop:favorite_products' %}" class="nav-link"><i class="fas fa-bookmark"></i>Favorites</a>
+{% else %}
+{% endif %}
+{% endblock favorites %}
+
+{% block profile %}
+{% if user.is_authenticated %}
+<a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+        class="fas fa-user-cog"></i>Profile</a>
+{% else %}
+<a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fas fa-user-cog"></i>Register</a>
+{% endif %}
+{% endblock profile %}
+
+{% block login %}
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i>Logout</a>
+{% else %}
+<a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i>Login</a>
+{% endif %}
+{% endblock login %}
+
+
 {% block content%} 
-<div class="container new-category">
+<div class="container contact-form">
     <div class="header">
-        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="Mich Dish logo">
+        <!-- C:\Users\shari\OneDrive\Documents\Projects\weybridge\shop\static\shop\icon_reverse.png -->
+        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="logo">
         <div>
-            <h1>{% block form_title %}{% endblock form_title %}</h1>
+            <h1>{{ capfirst }} Contact Us</h1>
         </div>
     </div>
     <div class="content">
+        <!-- Form For Creating a New Recipe -->
         <form action=""
             enctype="multipart/form-data" 
             method="POST" 
@@ -24,6 +52,9 @@
                 {% for message in messages %}
                 <div class="alert alert-{{message.tags}}">
                     {{message}}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 {% endfor %}
             {% endif %}

@@ -118,7 +118,7 @@
 
     <div class="row">
         {% if request.user.is_staff %}
-        <p style="font-style: italic;"><small>Created by {{ sale.created_by.get_full_name }} on {{ sale.created_at }} Updated by {{ sale.updated_by.get_full_name }} on {{ sale.updated_at }}</small></p>
+        <p style="font-style: italic;"><small>Created by {{ sale.created_by.get_full_name }} on {{ sale.created_at }} Updated by {{ sale.updated_by.get_full_name }} on {{ sale.updated_at }} Last promotion added on {{ last_promotion_added_on }}</small></p>
         {% endif %}
     </div>
 

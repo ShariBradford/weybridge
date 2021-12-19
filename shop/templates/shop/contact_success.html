@@ -31,10 +31,17 @@
 {% endblock login %}
 
 
-{% block content %}
-    {% include 'shop/breadcrumbs.html' %}
-
-    {% sidebar %}
-    
-    {% include 'shop/products.html'  with collection_id=collection.id %}
-{% endblock%}
+{% block content%} 
+<div class="container new-category">
+    <div class="header">
+        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="Mich Dish logo">
+        <div>
+            <h1>{{ action|capfirst }} Contact Us</h1>
+        </div>
+    </div>
+    <div class="content">
+        <h1>Thank you for your inquiry</h1>
+        <p>Your message was successfully submitted.</p> 
+    </div>
+</div>
+{% endblock %} 

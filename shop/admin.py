@@ -1,6 +1,82 @@
+from datetime import timedelta
+
 from django.contrib import admin
-from .models import *
 from django.contrib.admin import RelatedOnlyFieldListFilter
+from django.db.models import Q
+from django.utils import timezone 
+
+from .models import *
+
+class ProductIsOnSaleListFilter(admin.SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = 'Sale Status'
+
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = 'is_on_sale'
+
+    def lookups(self, request, model_admin):
+        """
+        Returns a list of tuples. The first element in each
+        tuple is the coded value for the option that will
+        appear in the URL query. The second element is the
+        human-readable name for the option that will appear
+        in the right sidebar.
+        """
+        return (
+            ('true', 'On Sale'),
+            ('false', 'Not On Sale'),
+        )
+
+    def queryset(self, request, queryset):
+        """
+        Returns the filtered queryset based on the value
+        provided in the query string and retrievable via
+        `self.value()`.
+        """
+        # Compare the requested value (either '80s' or '90s')
+        # to decide how to filter the queryset.
+        if self.value() == 'true':
+            return queryset.filter(promotions__sale__start_date__lte=date.today(),
+                promotions__sale__end_date__gte=date.today()
+            )
+        elif self.value() == 'false':
+            filter_conditions = (Q(promotions__isnull=True)) | (Q(promotions__sale__start_date__gt=date.today())) | (Q(promotions__sale__end_date__lt=date.today()))
+            return queryset.filter(filter_conditions).distinct()
+
+class ProductIsNewListFilter(admin.SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = 'New Status'
+
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = 'is_new'
+
+    def lookups(self, request, model_admin):
+        """
+        Returns a list of tuples. The first element in each
+        tuple is the coded value for the option that will
+        appear in the URL query. The second element is the
+        human-readable name for the option that will appear
+        in the right sidebar.
+        """
+        return (
+            ('true', 'New'),
+            ('false', 'Not New'),
+        )
+
+    def queryset(self, request, queryset):
+        """
+        Returns the filtered queryset based on the value
+        provided in the query string and retrievable via
+        `self.value()`.
+        """
+        # Compare the requested value (either '80s' or '90s')
+        # to decide how to filter the queryset.
+        if self.value() == 'true':
+            return queryset.filter(created_at__gte=timezone.now() + timedelta(days=-30))
+        elif self.value() == 'false':
+            return queryset.filter(created_at__lt=timezone.now() + timedelta(days=-30))
 
 # admin.site.register(Product)
 @admin.register(Product)
@@ -10,7 +86,8 @@ class ProductAdmin(admin.ModelAdmin):
     filter_horizontal = ('categories',)
     readonly_fields = ('created_by','created_at','updated_by','updated_at', 'is_on_sale', 'get_sale_price', 'get_default_photo_url')
     search_fields = ('name','description','sku')
-    list_display = ('name', 'get_default_photo_url','sku', 'price', 'is_on_sale', 'get_sale_price', 'inventory_stock','active')
+    list_display = ('name', 'get_average_rating', 'sku', 'price', 'is_on_sale', 'get_sale_price', 'inventory_stock','active', 'get_default_photo_url', 'size_chart')
+    list_filter = ('active', ProductIsOnSaleListFilter,ProductIsNewListFilter)
 
     def save_model(self, request, obj, form, change):
         print(f"Saving {obj.name}. Change = {change}")
@@ -150,7 +227,7 @@ class AnswerInline(admin.TabularInline):
 # admin.site.register(Question)
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    fields = ('content','asker','product','date_asked')
+    fields = ('content','asker','product','date_asked','followers')
     readonly_fields = ('date_asked',)
     search_fields = ('content','asker__first_name','asker__last_name','product__name')
     date_hierarchy = 'date_asked'
@@ -215,3 +292,27 @@ class CollectionAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 # admin.site.register(Sale)
+
+# admin.site.register(Contact)
+@admin.register(Contact)
+class CategoryAdmin(admin.ModelAdmin):
+    fields = ('from_email', 'subject','message', ('created_at', 'updated_at'))
+    search_fields = ('from_email','message','subject')
+    readonly_fields = ('created_at','updated_at')
+    list_display = ('from_email', 'subject','message', 'created_at')
+    ordering = ('created_at',)
+    list_filter = ('created_at',)
+    date_hierarchy = 'created_at'
+
+    # def save_model(self, request, obj, form, change):
+    #     # print(f"Saving {obj.name}. Change = {change}")
+    #     if change:
+    #         # user is updating item 
+    #         obj.updated_by = request.user
+    #     else:
+    #         # user is creating item
+    #         obj.created_by = request.user
+    #         obj.updated_by = request.user
+
+    #     super().save_model(request, obj, form, change)
+
