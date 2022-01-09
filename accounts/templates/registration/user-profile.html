@@ -47,6 +47,7 @@
             <h3 class="my-0" style="font-weight:bold;font-size: 14pt;">{{ profiled_user.first_name }} {{ profiled_user.last_name }}</h3>
             {% if profiled_user.id == user.id and profiled_user.email %}
             <p class="my-0"><small style="color:gray">{{ profiled_user.email }}</small></p>
+            <p class="my-0"><small style="color:gray">Last login: {{ profiled_user.last_login|date:"M. j, Y" }}</small></p>
             {% endif %}
             {% if profiled_user.id == user.id %}
             <p class="edit-profile mb-0" title="Edit" style="color:#009EC3">
@@ -66,7 +67,15 @@
             <div class="bio">{{ profiled_user.profile.bio|linebreaks }}</div>
             {% endif %}
 
-            <p><i class="fas fa-map-marker-alt"></i> {{ profiled_user.profile.location|default:"somewhere out there"|default_if_none:"somewhere out there" }}</p>
+            <p class="my-0"><i class="fas fa-map-marker-alt"></i> {{ profiled_user.profile.location|default:"somewhere out there"|default_if_none:"somewhere out there" }}</p>
+
+            <small>Time Zone: {{ profiled_user.profile.time_zone }}</small>
+            {% if user.id == profiled_user.id %}
+            <a href="{% url 'accounts:set_user_timezone' profiled_user_id=profiled_user.id %}">
+                <small><i class="fas fa-pen"></i> Edit</small>
+            </a>
+            {% endif %}
+
             
             {% if profiled_user.profile.birthday %}
             <p><i class="fas fa-birthday-cake"></i> {{ profiled_user.profile.birthday }}</p>

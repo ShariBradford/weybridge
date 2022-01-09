@@ -82,8 +82,8 @@ class Backlog(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User,related_name="backlog_items_updated", on_delete=models.CASCADE)
-    created_by = models.ForeignKey(User,related_name="backlog_items_created", on_delete=models.CASCADE)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="backlog_items_updated", on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="backlog_items_created", on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title

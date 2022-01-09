@@ -1,74 +1,69 @@
-{% extends 'shop/base.html' %}
+{% extends 'shop/generic_form.html' %}
 {% load static %}
 
 {% block css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'shop/css/product.css' %}">
 <link rel="stylesheet" href="{% static 'shop/css/createProduct.css' %}">
 {% endblock css %}
 
-{% block content%} 
-<div class="container new-dish">
-    <div class="header">
-        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="Mich Dish logo">
-        <div>
-            <h1>{{ action|capfirst }} Weybridge</h1>
-        </div>
-    </div>
-    <div class="content">
-        <form action=""
-            enctype="multipart/form-data" 
-            method="POST" 
-            role="form" novalidate>
-            {% csrf_token %}
-                            
-            {% for field in form.visible_fields %}
-            <div class="fieldWrapper form-group"
-                data-id="{{ field.name }}" 
-                aria-required="{% if field.field.required %}true{% else %}false{% endif %}">
+{% block form_title %}
+{{ action|capfirst }} Product
+{% endblock form_title %}
 
-                {% if field.name == 'images' %}
-                    {% if images %}
-                    <h3>Existing Images:</h3>
-                    <div class="dish-image existing-images">
-                        {% for image in images %}
-                            <span class="existing-image">
-                                <img src="{{ image.picture.url }}" data-id="{{ image.id }}" alt="Dish Picture Here">
-                                <a class="action-button button-delete" data-href="{% url 'shop:product_photo_delete' product_photo_id=image.id %}" title="Delete image">
-                                    <i class="fas fa-trash-alt"></i>
-                                </a>
-                                {% if image.is_default %}
-                                <a class="action-button button-make-default is-default" data-href="{% url 'shop:product_photo_make_primary' product_photo_id=image.id %}" title="Primary image">
-                                {% else %}
-                                <a class="action-button button-make-default" data-href="{% url 'shop:product_photo_make_primary' product_photo_id=image.id %}" title="Make primary image">
-                                {% endif %}
-                                    <i class="fas fa-certificate"></i>
-                                </a>
-                            </span>
-                        {% endfor %}
-                    </div><!-- end .dish-image -->
-                    {% endif %}
+{% block form_field_before_errors %}
+{% if field.name == 'images' %}
+    {% if images %}
+    <h3>Existing Images:</h3>
+    <div class="dish-image existing-images">
+        {% for image in images %}
+            <span class="existing-image">
+                <img src="{{ image.picture.url }}" data-id="{{ image.id }}" alt="Dish Picture Here">
+                <a class="action-button button-delete" data-href="{% url 'shop:product_photo_delete' product_photo_id=image.id %}" title="Delete image">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+                {% if image.is_default %}
+                <a class="action-button button-make-default is-default" data-href="{% url 'shop:product_photo_make_primary' product_photo_id=image.id %}" title="Primary image">
+                {% else %}
+                <a class="action-button button-make-default" data-href="{% url 'shop:product_photo_make_primary' product_photo_id=image.id %}" title="Make primary image">
                 {% endif %}
+                    <i class="fas fa-certificate"></i>
+                </a>
+            </span>
+        {% endfor %}
+    </div><!-- end .dish-image -->
+    {% endif %}
+{% endif %}
+{% endblock form_field_before_errors %}
 
-                {% for error in field.errors %}
-                <p class="alert alert-danger"><strong>{{ error }}</strong></p>
-                {% endfor %}
-                            
-                {{ field.label_tag }}{% if field.field.required %}<span class="required">*</span>{% endif %}
-                {{ field }}
-                {% if field.help_text %}
-                <small id="help_for_{{ field.name }}" class="form-text text-muted">{{ field.help_text|safe }}</small>
-                {% endif %}
-            </div>
-            {% endfor %}
+{% block form_field_after_field %}
+    {% if field.name == 'collection' %}
+    <div class="collection-info form-text"></div>
+    {% endif %}
+{% endblock form_field_after_field %}
 
-            {% for field in form.hidden_fields %}
-                {{ field }}
-            {% endfor %}
-            <div class="d-flex justify-content-center align-items-center">
-                <a href="{% if request.META.HTTP_REFERER == request.build_absolute_uri %}/{% else %}{{ request.META.HTTP_REFERER }}{% endif %}" class="btn btn-outline-secondary mb-2 mx-2" role="button">Cancel</a>
-                <input type="submit" class="btn btn-primary mb-2" value="Submit" />
-            </div>
-        </form>
-    </div>
-</div>
-{% endblock %} 
+
+{% block additional_scripts %}
+    <script>
+    $('.content').on('change', '.new-item form select[name="collection"]', function(e){
+        console.log('Collection dropdown changed.')
+        var collection_id = $(this).val();
+
+        if (!collection_id){
+            $('div.collection-info').html('');
+            return false;
+        } 
+        
+        getCollectionInfo(collection_id).done(function(data){
+            console.log('got collection info!');
+            var htmlString = '<div>';
+            htmlString += '<img src="' + data.profile_pic_url + '" alt="' + data.name + '" style="width:150px;">'
+            htmlString += '<small class="text-muted ml-2 mt-0 mb-3">';
+            htmlString += 'Collection: ' + data.name;
+            htmlString += '</small></div>'
+
+            $('div.collection-info').html(htmlString);
+        });
+    });
+    </script>
+{% endblock additional_scripts %}

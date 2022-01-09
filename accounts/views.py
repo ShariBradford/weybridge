@@ -1,14 +1,29 @@
+import pytz
+
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.utils import timezone
 from django.views.generic import DetailView
 from django.views.generic.edit import UpdateView
 
 from .forms import SignUpForm
 from shop.models import *
+
+def set_timezone(request,profiled_user_id):
+    if request.method == 'POST':
+        print(f'Setting timezone for user {profiled_user_id}')
+        request.session['django_timezone'] = request.POST['timezone']
+        user_profile = UserProfile.objects.get(user_id = profiled_user_id)
+        user_profile.time_zone = request.session['django_timezone']
+        user_profile.save()
+        # return redirect('/')
+        return redirect(user_profile.get_absolute_url())
+    else:
+        return render(request, 'accounts/template.html', {'timezones': pytz.common_timezones})
 
 def signup(request):
     if request.method == 'POST':
@@ -88,6 +103,8 @@ def update_user_profile(request, profiled_user_id):
             if form.cleaned_data['profile_pic'] == None or form.cleaned_data['profile_pic'] == False:
                 profile.profile_pic = UserProfile._meta.get_field('profile_pic').get_default()
 
+            request.session['django_timezone'] = form.cleaned_data['time_zone']
+
             #save the profile and then save the many-to-many data from the form
             profile.save()
 
@@ -95,6 +112,8 @@ def update_user_profile(request, profiled_user_id):
             # Django cannot immediately save the form data for the many-to-many relation.
             # Manually save many-to-many data
             form.save_m2m() 
+
+            # save the new timezone to session variable
 
             return redirect(f'/registration/{profiled_user_id}')
     
@@ -105,6 +124,7 @@ def update_user_profile(request, profiled_user_id):
         'user': request.user,
         'profiled_user': profiled_user,
         'form': form,
+        'action': 'Update',
     }
     return render(request,'registration/user-profile-form.html', context)
 

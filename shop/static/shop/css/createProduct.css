@@ -1,4 +1,4 @@
-.container.new-dish {
+/* .container.new-dish {
     width: 800px;
     margin: 20px auto;
     padding: 0;
@@ -8,7 +8,7 @@
 
 .container.new-dish .header {
     padding: 15px;
-    background-color: #03989E;
+    background-color: #EEE;
     display:flex;
     justify-content: center;
     align-items: center;
@@ -27,13 +27,16 @@
 
 .required, .error {
     color:red;
-}
+} */
 
-#allPost div img {
+/* #allPost div img {
     width: 150px;
     border: 1px solid lightgray;
-}
+} */
 
+/*  .existing-image is a class that includes existing product images.
+    up to 10 images can be uploaded per product
+*/
 .existing-image {
     position:relative;
     width:100px;

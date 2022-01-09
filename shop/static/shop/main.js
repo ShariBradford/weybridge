@@ -108,6 +108,27 @@ function answerQuestion(itemId, form){
     return call;
 }
 
+function getCollectionInfo(collection_id){
+    console.log('about to obtain collection info via ajax.');
+    var call = $.ajax({
+        url: '/collection/' + collection_id + '/getinfo/',
+        method: 'POST',
+        data: {
+            'csrfmiddlewaretoken' : $('input[name="csrfmiddlewaretoken"]').val(), // getCookie('csrftoken'),
+        },
+    })
+    .done(function(data){
+        console.log('Collection info for collection id ' + collection_id + ':');
+        console.log(data);
+    })
+    .fail(function(error){
+        console.log("Error getting collection info.");
+        console.log(error);
+    });
+
+    return call;
+}
+
 function getProductInfo(product_id){
     console.log('about to obtain product info via ajax.');
     var call = $.ajax({
@@ -122,7 +143,7 @@ function getProductInfo(product_id){
         console.log(data);
     })
     .fail(function(error){
-        console.log("Error submitting comment.");
+        console.log("Error getting product info.");
         console.log(error);
     });
 
@@ -143,12 +164,13 @@ function getSaleInfo(sale_id){
         console.log(data);
     })
     .fail(function(error){
-        console.log("Error submitting comment.");
+        console.log("Error getting sale info.");
         console.log(error);
     });
 
     return call;
 }
+
 
 $('.ratings-form input[type="submit"]').on('click', function(e){
     e.preventDefault();
@@ -271,6 +293,9 @@ $('.existing-images').on('click', '.existing-image .action-button', function(e){
     console.log('about to update image.');
 
     if ($(this).hasClass('is-default')) {
+        // No actions can be taken, so return false:
+        //  user cannot delete the default image, select a new default first.
+        //  user also cannot make default the default image
         return false;
     }
 
@@ -302,6 +327,7 @@ $('div.thumbnails').on('click', '.thumbnail', function(e){
 
 $(function () {
     $('[data-toggle="tooltip"]').tooltip()
+    
     // add bootstrap form-control class to signup and usercreation forms
     $('div.container.signup,div.container.login').find('input,textarea,select').addClass('form-control');
 });

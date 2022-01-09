@@ -4,7 +4,7 @@
         {% if breadcrumb != breadcrumbs|last %}
         <li class="breadcrumb-item">
             <a
-                href="{% if breadcrumb.type == 'home' %}{% url 'shop:index' %}{% elif breadcrumb.type == 'category' %}{% url 'shop:category_products' category_id=breadcrumb.id %}{% endif %}">
+                href="{% if breadcrumb.type == 'home' %}{% url 'shop:index' %}{% elif breadcrumb.type == 'category' %}{% url 'shop:category_products' category_id=breadcrumb.id %}{% elif breadcrumb.type == 'page' %}{{ breadcrumb.url }}{% endif %}">
                 {{ breadcrumb.name|title }}
             </a>
         {% else %}

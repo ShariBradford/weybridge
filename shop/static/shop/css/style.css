@@ -493,3 +493,9 @@ ul#id_number_of_stars li input:checked {
     border: 1pt solid lightgray;
     margin: 0 10px 0 0;
 }
+
+div.sidebar div.category.selected {
+    background-color: rgba(0,159,195,.5);
+    color:white !important;
+    /* border: 1px solid red; */
+}

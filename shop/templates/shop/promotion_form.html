@@ -1,59 +1,92 @@
-{% extends 'shop/base.html' %}
+{% extends 'shop/generic_form.html' %}
 {% load static humanize %}
 
-{% block css %}
-<link rel="stylesheet" href="{% static 'shop/css/createCategory.css' %}">
-{% endblock css %}
+{% block form_title %}
+    {{ action|capfirst }} Sale
+{% endblock form_title %}
 
-{% block content%} 
-<div class="container new-promotion">
-    <div class="header">
-        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="Mich Dish logo">
-        <div>
-            <h1>{% block form_title %}{% endblock form_title %}</h1>
-        </div>
-    </div>
+{% block form_field_after_header %}
     <div class="product-info d-flex justify-content-center align-items-center my-2"></div>
-    <div class="content">
-        <form action="."
-            class="promotion-form"
-            enctype="multipart/form-data" 
-            method="POST" 
-            role="form" novalidate>
-            {% csrf_token %}
-            
-            {% for error in form.non_field_errors %}
-            <p class="alert alert-danger"><strong>{{ error }}</strong></p>
-            {% endfor%}
+{% endblock form_field_after_header %}
 
-            {% for field in form.visible_fields %}
-            <div class="fieldWrapper form-group"
-                data-id="{{ field.name }}" 
-                aria-required="{% if field.field.required %}true{% else %}false{% endif %}">
+{% block form_field_after_field %}
+    {% if field.name == 'sale' %}
+    <div class="sale-info form-text"></div>
+    {% endif %}
+{% endblock form_field_after_field %}
 
-                {% for error in field.errors %}
-                <p class="alert alert-danger"><strong>{{ error }}</strong></p>
-                {% endfor %}
-                            
-                {{ field.label_tag }}{% if field.field.required %}<span class="required">*</span>{% endif %}
-                {{ field }}
-                {% if field.name == 'sale' %}
-                <div class="sale-info form-text"></div>
-                {% endif %}
-                {% if field.help_text %}
-                <small id="help_for_{{ field.name }}" class="form-text text-muted">{{ field.help_text|safe }}</small>
-                {% endif %}
-            </div>
-            {% endfor %}
+{% block additional_scripts %}
+<script type="text/javascript">
+    // console.log('Sale 1:');
+    // console.log(getCookie('csrftoken'));
+    $('.content').on('change', '.new-item form select[name="product"]', function(e){
+        console.log('Product dropdown changed.')
+        var product_id = $(this).val();
 
-            {% for field in form.hidden_fields %}
-                {{ field }}
-            {% endfor %}
-            <div class="d-flex justify-content-center align-items-center">
-                <a href="{% if request.META.HTTP_REFERER == request.build_absolute_uri %}/{% else %}{{ request.META.HTTP_REFERER }}{% endif %}" class="btn btn-outline-secondary mb-2 mx-2" role="button">Cancel</a>
-                <input type="submit" class="btn btn-primary mb-2" value="Submit" />
-            </div>
-        </form>
-    </div>
-</div>
-{% endblock %} 
+        if (!product_id){
+            $('div.product-info').html('');
+            return false;
+        } 
+        
+        getProductInfo(product_id).done(function(data){
+            console.log('got product info!');
+            var htmlString = '<div>';
+            htmlString += '<img src="' + data.product_photo_url + '" alt="' + data.name + '" style="width:40px;">'
+            htmlString += '<small class="text-muted ml-2 mt-0 mb-3">';
+            htmlString += 'Retail Price: $' + data.retail_price;
+            htmlString += '   &bull;   ';
+            htmlString += 'SKU: ' + data.sku;
+            htmlString += '   &bull;   ';
+            htmlString += 'Inventory: ' + data.inventory_stock;
+            htmlString += '</small></div>'
+
+            $('div.product-info').html(htmlString)
+        });
+    });
+
+    $('.content').on('change', '.new-item form select[name="sale"]', function(e){
+        console.log('Sale dropdown changed.')
+        var sale_id = $(this).val();
+
+        if (!sale_id){
+            $('div.sale-info').html('');
+            return false;
+        } 
+        
+        getSaleInfo(sale_id).done(function(data){
+            console.log('got sale info!');
+            var htmlString = '<div>';
+            htmlString += '<small class="text-muted ml-2 mt-0 mb-3">';
+            htmlString += data.description;
+            htmlString += '   &bull;   ';
+            htmlString += 'Start: ' + data.start_date;
+            htmlString += '   &bull;   ';
+            htmlString += 'End: ' + data.end_date;
+            if (data.has_ended) {
+                htmlString += '   &bull;   ';
+                htmlString += '<span style="color:red">Sale Ended</span>';
+            }
+            htmlString += '</small></div>'
+
+            $('div.sale-info').html(htmlString)
+        });
+    });
+
+    (function () {
+        console.log('running iife');
+
+        prod_info = $('.new-item form select[name="product"]').val();
+        if (prod_info) {
+            console.log('Product ' + prod_info);
+            $('.content').find('.new-item form select[name="product"]').trigger('change');
+        }
+
+        sale_info = $('.new-item form select[name="sale"]').val();
+        if (sale_info) {
+            console.log('Sale ' + sale_info);
+            $('.content').find('.new-item form select[name="sale"]').trigger('change');
+        }
+    })();
+
+</script>
+{% endblock additional_scripts %}

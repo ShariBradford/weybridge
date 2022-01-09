@@ -8,5 +8,5 @@ urlpatterns = [
     path('signup', views.signup, name='signup'),
     path('<int:profiled_user_id>', views.user_profile, name="user_profile"),
     path('<int:profiled_user_id>/update', views.update_user_profile, name="update_user_profile"),
-
+    path('<int:profiled_user_id>/settimezone', views.set_timezone, name="set_user_timezone"),
 ]

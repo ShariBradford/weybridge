@@ -18,26 +18,31 @@
     border-radius: 8px;
 }
 
-.product-info-box ul.categories {
+/* .info-box div displays the product collection (if any), categories, skus, etc. */
+.info-box ul.categories {
     margin: 0;
     padding: 0;
     display: inline-block;
 }
 
-.product-info-box ul.categories li {
+.info-box ul.categories li {
     display: inline-block;
     list-style-type: none;
     text-decoration: none;
 }
 
-.product-info-box ul.categories li::after {
+.info-box ul.categories li::after {
     content:' | ';
 }
 
-.product-info-box ul.categories li:last-child::after {
+.info-box ul.categories li:last-child::after {
     content:'';
 }
 
+/* 
+    The product details page uses the generic products template to display recently-viewed items.
+    Hide the new product button and the page navigation controls, since we don't need those for recently-viewed.
+*/
 .recently-viewed .products .new-item {
     display:none;
 }

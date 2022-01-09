@@ -1,0 +1,90 @@
+{% extends 'shop/base.html' %}
+{% load static shop_extras %}
+{% block css %}
+<link rel="stylesheet" href="{% static 'shop/css/favorites.css' %}">
+{% endblock css %}
+
+{% block greeting %}{% if user.is_authenticated %} {{ user.first_name }}{% else %}{% endif %}{% endblock greeting %}
+
+{% block favorites %}
+{% if user.is_authenticated %}
+<a href="{% url 'shop:favorite_products' %}" class="nav-link"><i class="fas fa-bookmark"></i>Favorites</a>
+{% else %}
+{% endif %}
+{% endblock favorites %}
+
+{% block profile %}
+{% if user.is_authenticated %}
+<a href="{% url 'accounts:user_profile' profiled_user_id=user.id %}" class="nav-link"><i
+        class="fas fa-user-cog"></i>Profile</a>
+{% else %}
+<a href="{% url 'accounts:signup' %}" class="nav-link"><i class="fas fa-user-cog"></i>Register</a>
+{% endif %}
+{% endblock profile %}
+
+{% block login %}
+{% if user.is_authenticated %}
+<a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i>Logout</a>
+{% else %}
+<a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i>Login</a>
+{% endif %}
+{% endblock login %}
+
+
+{% block content%} 
+<div class="container contact-form">
+    <div class="header">
+        <!-- C:\Users\shari\OneDrive\Documents\Projects\weybridge\shop\static\shop\icon_reverse.png -->
+        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="logo">
+        <div>
+            <h1>{{ capfirst }} Contact Us</h1>
+        </div>
+    </div>
+    <div class="content">
+        <!-- Form For Creating a New Recipe -->
+        <form action=""
+            enctype="multipart/form-data" 
+            method="POST" 
+            role="form" novalidate>
+            {% csrf_token %}
+                        
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{message.tags}}">
+                    {{message}}
+                    <!-- <small><a href="{% url 'shop:index' %}" class="btn btn-primary btn-sm close" role="button">Home</a></small> -->
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
+                     
+            {% for field in form.visible_fields %}
+            <div class="fieldWrapper form-group"
+                data-id="{{ field.name }}" 
+                aria-required="{% if field.field.required %}true{% else %}false{% endif %}">
+
+                {% for error in field.errors %}
+                <p class="alert alert-danger"><strong>{{ error }}</strong></p>
+                {% endfor %}
+                            
+                {{ field.label_tag }}{% if field.field.required %}<span class="required">*</span>{% endif %}
+                {{ field }}
+                {% if field.help_text %}
+                <small id="help_for_{{ field.name }}" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% for field in form.hidden_fields %}
+                {{ field }}
+            {% endfor %}
+            <div class="d-flex justify-content-center align-items-center">
+                <a href="{% if request.META.HTTP_REFERER == request.build_absolute_uri %}/{% else %}{{ request.META.HTTP_REFERER }}{% endif %}" class="btn btn-outline-secondary mb-2 mx-2" role="button">Cancel</a>
+                <input type="submit" class="btn btn-primary mb-2" value="Submit" />
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

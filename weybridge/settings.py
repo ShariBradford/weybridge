@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.TimezoneMiddleware',
 ]
 
 ROOT_URLCONF = 'weybridge.urls'
@@ -76,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.tz',
             ],
         },
     },
@@ -170,5 +172,11 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ]
 
+#Custom Settings
+DEFAULT_MAX_DIGITS = 40
+DEFAULT_DECIMAL_PLACES = 8
+
 SHOP_RECENTLY_VIEWED_SESSION_KEY = 'recently_viewed'    # name of session key for recently viewed productslist
 SHOP_RECENTLY_VIEWED_MAX_ITEMS = 5  # number of recently viewed products to store in session
+
+CART_EMPTY_CART_ID = -1 

@@ -15,19 +15,28 @@
                 <span>{% if question.answers.count %}{{ question.answers.count }} Answer{{ question.answers.count|pluralize }}{% else %}Unanswered{% endif %}</span>
                 <span>  &bull;  </span>
                 <!-- <a href="{% url 'shop:follow_question' question_id=question.id %}">Follow</a> -->
-                <form class="follow-form" 
-                    action="/question/{{ question.id }}/{% if user in question.followers.all %}unfollow{% else %}follow{% endif %}"
-                    method="POST", style="display:inline;" role="form" novalidate>
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-link" style="font-size: 8pt;padding: 0;">{% if user in question.followers.all %}Un-follow{% else %}Follow{% endif %}</button>
-                </form>
+                {% if user.is_authenticated %}
+                    <form class="follow-form" 
+                        action="/question/{{ question.id }}/{% if user in question.followers.all %}unfollow{% else %}follow{% endif %}"
+                        method="POST", style="display:inline;" role="form" novalidate>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link" style="font-size: 8pt;padding: 0;">{% if user in question.followers.all %}Un-follow{% else %}Follow{% endif %}</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}">Login to Follow</a>
+                {% endif %}
             </small>
         </div><!-- end .question-detail -->
     </div>
 
     <div class="new-answer">
-        <a href="" class="answer-button btn btn-info btn-small">Answer</a>
-        {% include 'shop/answerForm.html' with form=answer_form %}
+        {% if user.is_authenticated %}
+            <a href="" class="answer-button btn btn-info btn-small">Answer</a>
+            {% include 'shop/answerForm.html' with form=answer_form %}
+        {% else %}
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-info ml-3"><small>Login to post an answer</small></a>
+        {% endif %}
+
     </div><!-- end #newRating -->
 
     <div class="answers" style="margin-left:50px;">

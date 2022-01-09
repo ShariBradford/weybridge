@@ -7,6 +7,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core import serializers
 from django.core.mail import send_mail
 from django.db.models import (
@@ -156,7 +157,7 @@ def test(request):
 #     }
 #     return rating_info
 
-def get_breadcrumbs(page_type,item_id, breadcrumb_name=None):
+def get_breadcrumbs(page_type,item_id, breadcrumb_name=None, url=None):
     """
         Returns breadcrumbs for pages based on page type, item on page, etc.
     """
@@ -192,6 +193,18 @@ def get_breadcrumbs(page_type,item_id, breadcrumb_name=None):
                 "id": category,
                 "name": Category.objects.get(id=category).name,
             })
+    elif page_type == 'collection' or page_type == 'sale' or page_type == 'promotion':   
+        categories.append ({
+            "type": 'page',
+            "id": -1,
+            "name": f"{page_type.capitalize()}s",
+            "url": url,
+        })
+        categories.append({
+            "type": 'page',
+            "id": -1,
+            "name": breadcrumb_name #Collection.objects.get(id=item_id).name,
+        })
     else:
         categories.append ({
             "type": 'other',
@@ -254,34 +267,44 @@ def rate_product(request, product_id):
 def rating_vote(request, rating_id, score):
     kwargs = {
         'rating_id': rating_id,
-        'user': request.user
+        'user': None
     }
+
     client_ip, is_routable = get_client_ip(request)
+    print(f"Client IP: {client_ip}\nRoutable? {is_routable}")
+    
     if request.user.is_authenticated == False:
         if client_ip is None:
             return redirect(request.META.get('HTTP_REFERER'))
-        else:
-            # We got the client's IP address
-            if not is_routable:
-                return redirect(request.META.get('HTTP_REFERER'))
+        # else:
+        #     # We got the client's IP address
+        #     if not is_routable:
+        #         return redirect(request.META.get('HTTP_REFERER'))
     else:
-        # user is authenticated; make sure this user did not author the rating.
+        # user is authenticated; add to kwargs
+        kwargs.update({'user': request.user})
+
+        # make sure this user did not author the rating.
         # user cannot vote on her/his own rating.
         rating = Rating.objects.get(id=rating_id)
         if request.user == rating.user:
+            print(f"User cannot vote on own rating.")
             return redirect(request.META.get('HTTP_REFERER'))
     
-    kwargs['ip_address'] = client_ip
+    kwargs.update({'ip_address': client_ip})
     
     try:
         #if the following result does not raise an error, it means that 
         # user has already votedon this rating. Do nothing
-        RatingVote.objects.get(**kwargs)
+        print(f"{kwargs}")
+        vote = RatingVote.objects.get(**kwargs)
+        print(f"Vote already exists: {vote.__dict__}")
 
     except RatingVote.DoesNotExist:
         kwargs['score_type'] = score
         vote = RatingVote.objects.create(**kwargs)
         vote.save()
+        print(f"Vote created: {vote.__dict__}")
 
     return redirect(request.META.get('HTTP_REFERER'))
 
@@ -490,17 +513,19 @@ class RecentProductsView(StaffMemberRequiredMixin, RecentlyViewedMixin,TemplateV
         context['recently_viewed_items'] = self.get_recently_viewed_products(**kwargs)
         return context
 
-class ContactCreate(CreateView):
+class ContactCreate(SuccessMessageMixin, CreateView):
     model = Contact
     form_class = ContactForm
     success_url = reverse_lazy('shop:contact-us')
-    
+    success_message = "Thank you for your inquiry!"
+
     def form_valid(self, form):
         kwargs = self.get_form_kwargs()
 
         message = f"{form.cleaned_data.get('from_email')} said: "
         message += f"\n\n{form.cleaned_data.get('message')}"
         subject = f"Contact Form: {form.cleaned_data.get('subject').strip()}"
+
 
         send_mail(
             subject= subject,
@@ -510,7 +535,7 @@ class ContactCreate(CreateView):
         )
         # form.instance.created_by = self.request.user
         # form.instance.updated_by = self.request.user
-        messages.success(self.request,"Thank you for your inquiry!")
+        # messages.success(self.request,"Thank you for your inquiry!")
         response = super().form_valid(form)
 
         return response
@@ -618,6 +643,11 @@ class ProductCreate(StaffMemberRequiredMixin, CreateView):
     model = Product
     form_class = ProductFormWithImages
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Create'
+        return context
+
     def get_initial(self):
         initial = super().get_initial()
         
@@ -625,11 +655,8 @@ class ProductCreate(StaffMemberRequiredMixin, CreateView):
             # print(f'Category: {category_ids}')
             initial['categories'] = [int(category_id) for category_id in category_ids if category_id.isnumeric()]
 
-        elif collection_id := self.request.GET.getlist('collection_id',None):
+        if collection_id := self.request.GET.getlist('collection_id',None):
             initial['collection'] = collection_id
-
-        else:
-            pass
 
         return initial
 
@@ -676,7 +703,7 @@ class ProductUpdate(StaffMemberRequiredMixin, UpdateView):
         # context['question_form'] = QuestionForm()
         # context['categories'] = " | ".join(list(category.name for category in self.object.categories.all()))
         # # print(f'User Rating: {context["user_rating_this_item"].number_of_stars or None}')   
-
+        context['action'] = 'Update'
         return context
         
     # def form_valid(self, form):
@@ -765,12 +792,21 @@ class SaleDetail(StaffMemberRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         last_promotion_added_on = self.object.promotions.values('created_at').latest('created_at')['created_at']
-        context.update({'last_promotion_added_on' : last_promotion_added_on})
+        context.update({
+            'last_promotion_added_on' : last_promotion_added_on,
+            'breadcrumbs': get_breadcrumbs('sale',self.object.id,self.object.name, reverse_lazy('shop:sales')),
+        })
         return context
 
 class SaleCreate(StaffMemberRequiredMixin, CreateView):
     model = Sale
     form_class = SaleForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Create'
+        print(context)
+        return context
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -780,6 +816,11 @@ class SaleCreate(StaffMemberRequiredMixin, CreateView):
 class SaleUpdate(StaffMemberRequiredMixin, UpdateView):
     model = Sale
     form_class = SaleForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Update'
+        return context
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -802,6 +843,14 @@ class PromotionList(StaffMemberRequiredMixin, ListView):
 
 class PromotionDetail(StaffMemberRequiredMixin, DetailView):
     model = Promotion
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context.update({
+            'breadcrumbs': get_breadcrumbs('promotion',self.object.id,self.object.name, reverse_lazy('shop:promotions')),
+        })
+        return context
 
 class PromotionCreate(StaffMemberRequiredMixin, CreateView):
     model = Promotion
@@ -828,13 +877,13 @@ class PromotionCreate(StaffMemberRequiredMixin, CreateView):
        
         return super().get_success_url()
 
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-    #     if kwargs['pk']:
-    #         context['product'] = Product.objects.get(id=kwargs['pk'])
-    #     return context
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Create'
+        return context
 
     def form_valid(self, form):
+        form.instance.name = f"{form.instance.sale.name} - {form.instance.product.name}"
         form.instance.created_by = self.request.user
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
@@ -844,7 +893,13 @@ class PromotionUpdate(StaffMemberRequiredMixin, UpdateView):
     form_class = PromotionForm
     success_url = reverse_lazy('shop:promotions')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Update'
+        return context
+
     def form_valid(self, form):
+        form.instance.name = f"{form.instance.sale.name} - {form.instance.product.name}"
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
 
@@ -869,9 +924,38 @@ class CategoryDetail(StaffMemberRequiredMixin, DetailView):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
 
-        self.subcategories = get_category_children(self.object.id) 
+        # Get parent categories (list will include parent categories and the current category)
+        self.supercategories = get_category_parent(self.object.id) 
+
+        # create a category querystring that will be passed to the 'New' button so that 
+        # the new products form has this category and all is 'ancestors' pre-filled in
+        self.categories_query_string = urlencode({'category_id': self.supercategories}, doseq=True) 
+
+        # Remove the current category and then reverse the list so it's oldest ancestor first
+        self.supercategories.remove(self.object.id)
+        self.supercategories.reverse() 
+        
+        # specify an order for the queryset according to the supercategories array
+        self.supercategories_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(self.supercategories)])
+        # reference 'django models conditional expressions' for info on Case and When
+
+        self.subcategories = get_category_children(self.object.id)
+        self.subcategories.reverse() 
+
+        # specify an order for the queryset according to the subcategories array
+        self.subcategories_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(self.subcategories)])
+        # reference 'django models conditional expressions' for info on Case and When
+
+        # print(f"Supercategories ARRAY for {self.object.name}: {self.supercategories}")
+        # print(f"Subcategories ARRAY for {self.object.name}: {self.subcategories}")
+
         context.update({
-            'subcategories': " | ".join(list(category.name for category in Category.objects.filter(id__in = self.subcategories).all())),
+            # 'supercategories': " | ".join(list(category.name for category in Category.objects.filter(id__in = self.supercategories).all())),
+            'supercategories': Category.objects.filter(id__in = self.supercategories).order_by(self.supercategories_order).all(),
+            # 'subcategories': " | ".join(list(category.name for category in Category.objects.filter(id__in = self.subcategories).order_by(self.subcategories_order).all())),
+            'subcategories': Category.objects.filter(id__in = self.subcategories).order_by(self.subcategories_order).all(),
+            'all_products': Product.objects.filter(categories__in = self.subcategories).distinct().order_by('name'),
+            'categories_query_string': self.categories_query_string,
             'breadcrumbs': get_breadcrumbs('category',self.object.id),
             'product_count': Product.objects.filter(categories__id__in = self.subcategories).distinct().count(),
         })      
@@ -879,8 +963,15 @@ class CategoryDetail(StaffMemberRequiredMixin, DetailView):
         # context['breadcrumbs'] = get_breadcrumbs('category',self.object.id)
         # context['product_count'] = Product.objects.filter(categories__id__in = self.subcategories).distinct().count()
 
+        # print(f"Supercategories for {self.object.name}: {context['supercategories']}")
+        # print(f"Subcategories for {self.object.name}: {context['subcategories']}")
+
+        # print(f"Supercategories ARRAY for {self.object.name}: {self.supercategories}")
+        # print(f"Supercategories for {self.object.name}: {context['supercategories']}")
+
         # print(f"Subcategories ARRAY for {self.object.name}: {self.subcategories}")
         # print(f"Subcategories for {self.object.name}: {context['subcategories']}")
+
         # print(f"Breadcrumbs for {self.object.name}: {context['breadcrumbs']}")
         # print(f"Product Count for {self.object.name}: {context['product_count']}")
         return context
@@ -890,6 +981,11 @@ class CategoryCreate(StaffMemberRequiredMixin, CreateView):
     form_class = CategoryForm
     success_url = reverse_lazy('shop:categories')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Create'
+        return context
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         form.instance.updated_by = self.request.user
@@ -898,6 +994,12 @@ class CategoryCreate(StaffMemberRequiredMixin, CreateView):
 class CategoryUpdate(StaffMemberRequiredMixin, UpdateView):
     model = Category
     form_class = CategoryForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Update'
+        print(f"Context: {context}")
+        return context
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -967,7 +1069,7 @@ class CollectionDetail(DetailView):
         context = super().get_context_data(**kwargs)
 
         context.update({
-            'breadcrumbs': get_breadcrumbs('other',self.object.id,self.object.name),
+            'breadcrumbs': get_breadcrumbs('collection',self.object.id,self.object.name,reverse_lazy('shop:collections')),
             'product_count': Product.objects.filter(collection = self.object).count(),
         })
         # context['breadcrumbs'] = get_breadcrumbs('other',self.object.id,self.object.name)       
@@ -982,6 +1084,11 @@ class CollectionCreate(StaffMemberRequiredMixin, CreateView):
     form_class = CollectionForm
     success_url = reverse_lazy('shop:collections')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Create'
+        return context
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         form.instance.updated_by = self.request.user
@@ -990,6 +1097,11 @@ class CollectionCreate(StaffMemberRequiredMixin, CreateView):
 class CollectionUpdate(StaffMemberRequiredMixin, UpdateView):
     model = Collection
     form_class = CollectionForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action'] = 'Create'
+        return context
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -1022,7 +1134,8 @@ class CollectionProductList(ProductList):
         # Add in the category
         context.update({
             'collection': self.collection,
-            'breadcrumbs': get_breadcrumbs('page',None,self.collection.name),
+            'breadcrumbs': get_breadcrumbs('collection',self.collection.id,self.collection.name),
+            # 'breadcrumbs': get_breadcrumbs('page',None,self.collection.name),
         })
         # context['collection'] = self.collection
         # context['breadcrumbs'] = get_breadcrumbs('page',None,self.collection.name)
@@ -1174,6 +1287,22 @@ def get_sale_info(request, sale_id):
             'start_date': sale.start_date,
             'end_date': sale.end_date,
             'has_ended': sale.has_ended(),
+        }
+        return JsonResponse(data)
+    return HttpResponseNotAllowed(['POST'])
+
+def get_collection_info(request, collection_id):
+    """
+        Returns json-formatted information about collection object
+        or HTTPResponseNotAllowed if not a POST request.
+    """
+
+    if request.method == 'POST':
+        collection = Collection.objects.get(id=collection_id)
+        data = {
+            'name': collection.name,
+            'id': collection.id,
+            'profile_pic_url': collection.profile_pic.url,
         }
         return JsonResponse(data)
     return HttpResponseNotAllowed(['POST'])

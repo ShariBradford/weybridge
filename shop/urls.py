@@ -68,6 +68,7 @@ collection_patterns = [
     path('<int:pk>/', views.CollectionDetail.as_view(), name="collection_details"),
     path('<int:pk>/update/', views.CollectionUpdate.as_view(), name="collection_update"),
     path('<int:pk>/delete/', views.CollectionDelete.as_view(), name="collection_delete"),
+    path('<int:collection_id>/getinfo/', views.get_collection_info, name="get_collection_info"),
 ]
 
 urlpatterns = [

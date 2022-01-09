@@ -61,7 +61,7 @@
                         {% block cart %}
                         <a href="{% url 'cart:cart_details' %}" class="nav-link">
                             <i class="fas fa-shopping-cart"></i>
-                            <span class="badge badge-pill badge-primary">{{ request.session.cart_item_count }}</span>
+                            {% if request.session.cart_item_count %}<span class="badge badge-pill badge-primary">{{ request.session.cart_item_count }}</span>{% endif %}
                         </a>
                         {% endblock cart %}
                     </li>
@@ -140,6 +140,8 @@
         crossorigin="anonymous"></script>
     <script src="https://kit.fontawesome.com/5eddd1b245.js" crossorigin="anonymous"></script>
     <script src="{% static 'shop/main.js' %}"></script>
+    {% block scripts %}
+    {% endblock scripts %}
 </body>
 
 </html>

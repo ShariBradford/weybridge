@@ -212,6 +212,13 @@ def get_categories(parent_category_id,level=0):
 
     return categories    
 
+def create_ref_code():
+    """
+        Creates a 20-character reference code containing lowercase letters and digits.
+    """
+
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+
 def random_string_generator(size = 10, chars = string.ascii_lowercase + string.digits): 
     """
         Returns a random string of length specified in 'size' parameter.

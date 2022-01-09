@@ -1,9 +1,10 @@
 from datetime import timedelta
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin import RelatedOnlyFieldListFilter
 from django.db.models import Q
 from django.utils import timezone 
+from django.utils.translation import ngettext
 
 from .models import *
 
@@ -88,6 +89,24 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name','description','sku')
     list_display = ('name', 'get_average_rating', 'sku', 'price', 'is_on_sale', 'get_sale_price', 'inventory_stock','active', 'get_default_photo_url', 'size_chart')
     list_filter = ('active', ProductIsOnSaleListFilter,ProductIsNewListFilter)
+    actions = ['mark_inactive']
+
+    def mark_inactive(self, request, queryset):
+        updated = queryset.update(active = False)
+        self.message_user(
+            request, 
+            ngettext(
+                f"{updated} item successfully marked as inactive.", 
+                f"{updated} items successfully marked as inactive.", 
+                updated
+            ),
+            level=messages.SUCCESS, 
+            extra_tags='', 
+            fail_silently=True
+        )
+        for obj in queryset:
+            admin.ModelAdmin.log_change(self,request, obj, f"Marked inactive: '{str(obj)}'")
+    mark_inactive.short_description='Mark selected items inactive'
 
     def save_model(self, request, obj, form, change):
         print(f"Saving {obj.name}. Change = {change}")

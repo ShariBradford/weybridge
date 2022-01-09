@@ -47,8 +47,8 @@ class AbstractHistoryModel(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User,related_name="%(class)ss_updated", on_delete=models.CASCADE)
-    created_by = models.ForeignKey(User,related_name="%(class)ss_created", on_delete=models.CASCADE)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="%(class)ss_updated", on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="%(class)ss_created", on_delete=models.CASCADE)
 
     class Meta:
         abstract = True
@@ -65,8 +65,8 @@ class Category(models.Model):
         )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User,related_name="categories_updated", on_delete=models.CASCADE)
-    created_by = models.ForeignKey(User,related_name="categories_created", on_delete=models.CASCADE)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="categories_updated", on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="categories_created", on_delete=models.CASCADE)
 
     class Meta:
         verbose_name_plural = "categories"
@@ -83,7 +83,7 @@ class CategoryForm(ModelForm):
         model = Category
         fields = ['name', 'profile_pic','parent_category','description']
         widgets = {
-            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file',}),
+            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file','data-single-image': 'true'}),
             'name' : forms.TextInput(attrs={'class':'form-control'}),
             'parent_category' : forms.Select(attrs={'class':'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
@@ -122,7 +122,7 @@ class CollectionForm(ModelForm):
         model = Collection
         fields = ['profile_pic', 'name', 'description']
         widgets = {
-            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file',}),
+            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file','data-single-image': 'true',}),
             'name' : forms.TextInput(attrs={'class':'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
        }        
@@ -301,7 +301,8 @@ class ProductFormWithImages(ProductForm):
         widget=forms.ClearableFileInput(
             attrs={
                 'class': 'form-control-file',
-                'multiple':True
+                'multiple':True,
+                'data-multiple-image':"true",
             }
         )
     )
@@ -368,7 +369,7 @@ class SaleForm(ModelForm):
         model = Sale
         fields = ['profile_pic', 'name', 'promo_code', 'description', 'terms', 'start_date', 'end_date']
         widgets = {
-            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file',}),
+            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file','data-single-image':'true'}),
             'name' : forms.TextInput(attrs={'class':'form-control'}),
             'promo_code' : forms.TextInput(attrs={'class':'form-control'}),
             'description': forms.TextInput(attrs={'class': 'form-control'}),
@@ -442,7 +443,7 @@ class Rating(models.Model):
         (5, 'Pretty freakin awesome!')
     )
     product = models.ForeignKey(Product,related_name="ratings", on_delete=models.CASCADE)
-    user = models.ForeignKey(User,related_name="ratings", on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="ratings", on_delete=models.CASCADE)
     number_of_stars = models.IntegerField(
         choices=RATING_CHOICES,
         validators=[MinValueValidator(1), MaxValueValidator(5)],
@@ -451,7 +452,7 @@ class Rating(models.Model):
     review = models.CharField(max_length=255, null=True, blank=True, help_text="Let other shoppers know what you liked, or didn't, about this purchase.")
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
-    updated_by = models.ForeignKey(User,related_name="ratings_updated", on_delete=models.CASCADE)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="ratings_updated", on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.number_of_stars} star rating for {self.product}'
@@ -479,7 +480,7 @@ class RatingVote(models.Model):
         (1, 'up_vote'),
     )
     rating = models.ForeignKey(Rating,related_name="votes", on_delete=models.CASCADE)
-    user = models.ForeignKey(User,related_name="votes", on_delete=models.CASCADE, blank=True, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="votes", on_delete=models.CASCADE, blank=True, null=True)
     ip_address = models.GenericIPAddressField()
     score_type = models.SmallIntegerField(choices=SCORE_CHOICES)
     created_at = models.DateTimeField(auto_now_add = True)
@@ -493,7 +494,7 @@ class RatingVote(models.Model):
 class Question(models.Model):
     #id INT
     content = models.CharField(max_length=255)
-    asker = models.ForeignKey(User,related_name="questions_asked", on_delete=models.CASCADE)
+    asker = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="questions_asked", on_delete=models.CASCADE)
     followers = models.ManyToManyField(User, blank=True, null=True, related_name='questions_followed')
     # answers = models.ForeignKey(Answer, related_name='question', on_delete=models.CASCADE, null=True, blank=True)
     product = models.ForeignKey(Product,related_name="questions", on_delete=models.CASCADE)
@@ -517,10 +518,10 @@ class Answer(models.Model):
     #id INT
     question = models.ForeignKey(Question, related_name='answers', on_delete=models.CASCADE, null=True, blank=True)
     content = models.CharField(max_length=255)
-    answerer = models.ForeignKey(User,related_name="product_answers", null=True, blank=True, on_delete=models.CASCADE)
+    answerer = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="product_answers", null=True, blank=True, on_delete=models.CASCADE)
     date_answered = models.DateField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
-    updated_by = models.ForeignKey(User,related_name="answers_updated", on_delete=models.CASCADE)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="answers_updated", on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.content}'
@@ -592,10 +593,13 @@ class UserProfile(models.Model):
         null=True,
         )
     bio = models.TextField(blank=True, null=True, help_text="Tell us about yourself!")
-    user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile', on_delete=models.CASCADE)
     location = models.CharField(blank=True, null=True,max_length=50)
     birthday = models.DateField(blank=True, null=True)
     favorites = models.ManyToManyField(Product, blank=True, null=True, related_name='favorited_by')
+    time_zone = models.CharField(max_length=100, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=50, blank=True, null=True)
+    one_click_purchasing = models.BooleanField(default=False)    
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
 
@@ -604,7 +608,10 @@ class UserProfile(models.Model):
         return f'{self.user.get_full_name()} Profile'
 
     def get_absolute_url(self):
-        return reverse('accounts:user_profile',kwargs={'profiled_user_id': self.id})
+        print(f'Getting UserProfile URL for ID # {self.user_id}')
+        print(reverse('accounts:user_profile',kwargs={'profiled_user_id': self.user_id}))
+
+        return reverse('accounts:user_profile',kwargs={'profiled_user_id': self.user_id})
     
     def favorite(self, product):
         """Favorite `product`."""
@@ -621,12 +628,13 @@ class UserProfile(models.Model):
 class UserProfileForm(ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['bio', 'location', 'birthday', 'profile_pic']
+        fields = ['bio', 'location', 'birthday', 'profile_pic', 'time_zone']
         widgets = {
-            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file',}),
+            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file','data-single-image': 'true',}),
             'bio': forms.Textarea(attrs={'class': 'form-control'}),
             'location' : forms.TextInput(attrs={'class':'form-control'}),
             'birth_date': forms.DateTimeInput(attrs={'class': 'form-control'}),
+            'time_zone': forms.TextInput(attrs={'class':'form-control'}),
        }
 
 class Contact(models.Model):

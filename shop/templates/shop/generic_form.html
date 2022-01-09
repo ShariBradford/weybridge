@@ -2,17 +2,20 @@
 {% load static humanize %}
 
 {% block css %}
-<link rel="stylesheet" href="{% static 'shop/css/createCategory.css' %}">
+<link rel="stylesheet" href="{% static 'shop/css/generic_form.css' %}">
 {% endblock css %}
 
 {% block content%} 
-<div class="container new-category">
+<div class="container new-item">
     <div class="header">
-        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="Mich Dish logo">
+        <img src="{% static 'shop/icon_reverse.png' %}" width="40px" alt="logo">
         <div>
             <h1>{% block form_title %}{% endblock form_title %}</h1>
         </div>
     </div>
+
+    {% block form_field_after_header %}{% endblock form_field_after_header %}
+
     <div class="content">
         <form action=""
             enctype="multipart/form-data" 
@@ -33,12 +36,14 @@
                 data-id="{{ field.name }}" 
                 aria-required="{% if field.field.required %}true{% else %}false{% endif %}">
 
+                {% block form_field_before_errors %}{% endblock form_field_before_errors %}
                 {% for error in field.errors %}
                 <p class="alert alert-danger"><strong>{{ error }}</strong></p>
                 {% endfor %}
                             
                 {{ field.label_tag }}{% if field.field.required %}<span class="required">*</span>{% endif %}
                 {{ field }}
+                {% block form_field_after_field %}{% endblock form_field_after_field %}
                 {% if field.help_text %}
                 <small id="help_for_{{ field.name }}" class="form-text text-muted">{{ field.help_text|safe }}</small>
                 {% endif %}
@@ -55,4 +60,82 @@
         </form>
     </div>
 </div>
-{% endblock %} 
+{% endblock content %} 
+
+{% block scripts %}
+    <script type="text/javascript">
+        function addSingleImageToForm(){
+            // To identify a model field that is an ImageField, in the form, 
+            //  add data-single-image:"true" key-value pair to the field's widget definition like this:
+            // "'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file','data-single-image': 'true'}),"
+            // Form template should wrap each form field in '.fieldWrapper' div
+            $('.fieldWrapper [data-single-image="true"]').prevAll('a').each(function(index,element){
+                var image = $(this).attr('href');
+                $(this).parent().prepend('<div class=".existing-image existing-image-' + index + '"><img src="' + image + '" style="width:100px"/></div>');
+            });
+        }
+
+        function displayUploadedImage(event){
+            // When the file input element changes (i.e., a new image is uploaded),
+            // show  new image beneath file input element
+            var $input = $(event.target);
+
+            console.log('Input has changed.');
+            console.log($input);
+
+            console.log('Existing image src = ' + $input.prevAll('.existing-image').find('img').attr('src'));
+
+            if($input[0].files && $input[0].files[0]){
+                console.log('New file(s) uploaded.');
+
+                if($input.attr('multiple') == 'multiple'){
+                    // empty the .new-image div before appending new images
+                    if($input.next('.new-image').length){
+                        $input.next('.new-image').empty();
+                    }
+
+                    // add the files content to .new-images
+                    $.each($input[0].files, function(index,file){
+                        var reader = new FileReader();
+                        reader.onload = function(){
+                            console.log('Done reading file: ');
+                            // console.log(reader.result);
+                            // $input.prevAll('.form-auto-image').find('img').attr('src', reader.result);
+                            if($input.next('.new-image').length){
+                                $input.next('.new-image').append('<img src="' +  reader.result + '" style="width:100px;margin-top:10px;"/>');
+                            } else {
+                                $input.after('<div class="new-image"><img src="' + reader.result + '" style="width:100px;margin-top:10px;"/></div>');
+                            }                    
+                        }
+
+                        reader.readAsDataURL($input[0].files[index]);
+                    })
+
+                } else {
+                    var reader = new FileReader();
+                    reader.onload = function(){
+                        console.log('Done reading file: ');
+                        // console.log(reader.result);
+                        // $input.prevAll('.form-auto-image').find('img').attr('src', reader.result);
+                        if($input.next('.new-image').length){
+                            $input.next('.new-image').find('img').attr('src', reader.result);
+                        } else {
+                            $input.after('<div class="new-image"><img src="' + reader.result + '" style="width:100px;margin-top:10px;"/></div>');
+                        }                    
+                    }
+
+                    reader.readAsDataURL($input[0].files[0]);
+                }
+            }
+        }
+        $('.fieldWrapper [data-single-image="true"]').on('change', function(e){
+            displayUploadedImage(e) //($(this));
+        });
+        $('.fieldWrapper [data-multiple-image="true"]').on('change', function(e){
+            displayUploadedImage(e) //($(this));
+        });
+        addSingleImageToForm();
+    </script>
+    {% block additional_scripts %}
+    {% endblock additional_scripts %}
+{% endblock scripts %}

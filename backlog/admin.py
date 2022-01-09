@@ -5,7 +5,7 @@ from .models import *
 # admin.site.register(Backlog)
 @admin.register(Backlog)
 class BacklogAdmin(admin.ModelAdmin):
-    # fields = ('app_name', 'model_name', 'title', 'description', 'category', 'priority','status')
+    fields = ('app_name', 'model_name', 'category', 'title', 'description', ('priority','status'), ('created_by','created_at'), ('updated_by','updated_at'))
     date_hierarchy = 'created_at'
     readonly_fields = ('created_by','created_at','updated_by','updated_at')
     search_fields = ('title', 'app_name','model_name','description')
@@ -28,7 +28,7 @@ class BacklogAdmin(admin.ModelAdmin):
             fail_silently=True
         )
         for obj in queryset:
-            self.log_change(request, obj, f"Marked completed: '{str(obj)}'")
+            admin.ModelAdmin.log_change(self,request, obj, f"Marked completed: '{str(obj)}'")
     mark_completed.short_description='Mark selected items completed'
 
     def save_model(self, request, obj, form, change):
