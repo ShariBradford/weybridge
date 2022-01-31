@@ -1,12 +1,17 @@
 from datetime import datetime,timezone,timedelta
 
 from django.conf import settings
+from django.core.files import File
+from django.core.files.base import ContentFile
+from django.core.files.temp import NamedTemporaryFile
 from django.db.models import Value, IntegerField, CharField
 from django.shortcuts import reverse
 from django.utils.text import slugify
 
-import random 
-import string 
+import random, requests, string, urllib
+
+from PIL import Image
+from io import BytesIO
 
 from .models import Category,Product,Rating,RatingForm
 
@@ -251,3 +256,28 @@ def unique_slug_generator(instance, field_to_slugify, new_slug = None):
         return unique_slug_generator(instance, new_slug = new_slug) 
     return slug 
 
+def getPhotoFromURL(image_url,filename):
+    headers = {"Accept":"image/*"}
+    response = requests.get(image_url, headers=headers)
+
+    if response.status_code == 200:
+        print(f'Image has been downloaded from {image_url}')
+        # return ContentFile(response.content)
+
+        temp_image = NamedTemporaryFile() #delete=True is default
+        temp_image.write(response.content)
+        temp_image.flush()
+        return File(temp_image,name=filename)
+
+        # try:
+        #     i = Image.open(BytesIO(response.content))
+        #     print(f'Image opened.')    
+        #     return i
+
+        # except:
+        #     print(f'Image could not be opened.')    
+        #     return ''
+
+    else:
+        print(f'Image could not be downloaded from {image_url}')
+        return ''

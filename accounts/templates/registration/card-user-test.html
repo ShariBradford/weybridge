@@ -1,0 +1,29 @@
+{% load static %}
+<h3>Test Data</h3>
+<div class="container">
+    <div class="row">
+        {% for user in user_data.results %}        
+        <div class="card mr-2{% if user.created %} created-user{% endif %}" id="{{user.user_id|default_if_none:user.id.value|cut:'-' }}">
+
+            <img class="card-img-top" src="{{ user.picture.large }}" alt="Image of {{ user.name.first }}">
+
+            <div class="card-body">
+                <h3 class="card-title mb-0">                       
+                    {{ user.name.first }} {{ user.name.last }}
+                </h3>
+                <small class="card-subtitle mt-0 mb-2 text-muted">{{ user.location.city }}</small> 
+                <p class="card-text my-0" style="font-size: 10pt;">
+                    Email: {{ user.email }}
+                </p>
+                <p class="card-text my-0" style="font-size: 10pt;">
+                    DOB: {{ user.dob.date }}
+                </p>
+                <p class="card-text my-0" style="font-size: 10pt;">
+                    Created? {{ user.created }}
+                    {% if user.created and user.user_id %} <small><a href="{% url 'accounts:user_profile' profiled_user_id=user.user_id %}" target="_blank" title="View user profile in new window.">Profile</a></small>{% endif %}
+                </p>
+            </div> <!-- .card-body -->
+        </div><!-- .card -->
+        {% endfor %}
+    </div>
+</div>

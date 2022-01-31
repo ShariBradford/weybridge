@@ -201,13 +201,13 @@ class RatingAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-# admin.site.register(UserProfile)
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    fields = (('user__first_name','user__last_name'),'user__email', 'bio', 'location', 'profile_pic')
-    search_fields = ('bio','location','user__first_name','user__last_name','user__email')
-    list_display = ('user', 'profile_pic', 'location')
-    read_only_fields = ('user__first_name','user__last_name', 'user__email')
+admin.site.register(UserProfile)
+# @admin.register(UserProfile)
+# class UserProfileAdmin(admin.ModelAdmin):
+#     fields = (('user__first_name','user__last_name'),'user__email', 'bio', 'location', 'profile_pic')
+#     search_fields = ('bio','location','user__first_name','user__last_name','user__email')
+#     list_display = ('user', 'profile_pic', 'location')
+#     read_only_fields = ('user__first_name','user__last_name', 'user__email')
 
 # admin.site.register(Answer)
 @admin.register(Answer)

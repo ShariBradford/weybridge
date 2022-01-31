@@ -24,17 +24,15 @@ environ.Env.read_env()
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = 't+g56!qi_kga-d_qeoxql^s6*^ff#ezgjg$hjook3r(fx12emk'
 SECRET_KEY = env('SECRET_KEY')
+DEFAULT_TEST_PASSWORD = env('DEFAULT_TEST_PASSWORD')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'shop',
     'accounts',

@@ -1,0 +1,24 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block content %}
+    {% if messages %}
+    {% for message in messages %}
+        <p class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} py-1 my-1" role="alert">                                
+        {{ message }}
+        </p>
+    {%  endfor %}
+    {% endif %}
+
+    <h1>Test User Data</h1>
+    <ul>
+        <li><a href="{% url 'accounts:reset_users' %}">Reset user profile pictures</a></li>
+        <li><a href="{% url 'accounts:create_users' %}">Create Users</a></li>
+    </ul>
+    {% if user_data %}
+    <div class="raw-data">User data loaded.</div>
+    {% include 'registration/card-user-test.html' %}
+    {% else %}
+    <div>No test data provided</div>
+    {% endif %}
+{% endblock content %}
