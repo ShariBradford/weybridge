@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.contrib import admin, messages
 from django.contrib.admin import RelatedOnlyFieldListFilter
+from django.contrib.auth.models import User
 from django.db.models import Q
 from django.utils import timezone 
 from django.utils.translation import ngettext
@@ -181,13 +182,14 @@ class PromotionAdmin(admin.ModelAdmin):
 @admin.register(Rating)
 class RatingAdmin(admin.ModelAdmin):
     radio_fields = {"number_of_stars": admin.HORIZONTAL}
-    search_fields = ('review','product__name')
+    search_fields = ('review','product__name','user__username')
     readonly_fields = ('user','created_at','updated_by','updated_at')
     autocomplete_fields = ('product',)
     list_display = ('product','number_of_stars', 'user', 'created_at')
     fields = ('product','number_of_stars', ('user', 'created_at'),('updated_by','updated_at'))
     list_filter = ('number_of_stars', 'created_at')
     ordering = ('product__name',)
+    date_hierarchy = 'created_at'
 
     def save_model(self, request, obj, form, change):
         # print(f"Saving {obj.name}. Change = {change}")
@@ -201,13 +203,28 @@ class RatingAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-admin.site.register(UserProfile)
-# @admin.register(UserProfile)
-# class UserProfileAdmin(admin.ModelAdmin):
-#     fields = (('user__first_name','user__last_name'),'user__email', 'bio', 'location', 'profile_pic')
-#     search_fields = ('bio','location','user__first_name','user__last_name','user__email')
-#     list_display = ('user', 'profile_pic', 'location')
-#     read_only_fields = ('user__first_name','user__last_name', 'user__email')
+# admin.site.register(UserProfile)
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    date_hierarchy = 'created_at'
+    search_fields = ('bio','location','user__first_name','user__last_name','user__email')
+    list_display = ('user', 'get_user_fullname', 'profile_pic', 'location', 'time_zone', 'one_click_purchasing',)
+    readonly_fields = ('created_at','updated_at', 'get_user_fullname', 'get_user_email', 'id', 'user_id', )
+    list_filter = ('one_click_purchasing',)
+
+    fieldsets = (
+        ('Associated User', {'fields': (('get_user_fullname', 'user_id'),'get_user_email',) }),
+        ('Profile Details', {
+            'fields': ('bio', 'location', 'profile_pic', 'id',),
+        }),
+        ('Favorites', {
+            'fields': ('favorites', ),
+        }),
+        ('History', {
+            'fields': ('created_at','updated_at'),
+        }),
+    )
+
 
 # admin.site.register(Answer)
 @admin.register(Answer)

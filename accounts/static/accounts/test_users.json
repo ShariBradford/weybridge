@@ -744,7 +744,7 @@
         {
             "name": {
                 "title": "Mrs",
-                "first": "Emily",
+                "first": "Emilie",
                 "last": "Perkins"
             },
             "location": {
@@ -765,7 +765,7 @@
                     "description": "Newfoundland"
                 }
             },
-            "email": "emily.perkins@example.com",
+            "email": "emilie.perkins@example.com",
             "dob": {
                 "date": "1946-01-12T19:40:13.503Z",
                 "age": 74

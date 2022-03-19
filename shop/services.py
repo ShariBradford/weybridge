@@ -2,16 +2,12 @@ from datetime import datetime,timezone,timedelta
 
 from django.conf import settings
 from django.core.files import File
-from django.core.files.base import ContentFile
 from django.core.files.temp import NamedTemporaryFile
 from django.db.models import Value, IntegerField, CharField
 from django.shortcuts import reverse
 from django.utils.text import slugify
 
-import random, requests, string, urllib
-
-from PIL import Image
-from io import BytesIO
+import random, requests, string
 
 from .models import Category,Product,Rating,RatingForm
 
@@ -257,27 +253,36 @@ def unique_slug_generator(instance, field_to_slugify, new_slug = None):
     return slug 
 
 def getPhotoFromURL(image_url,filename):
+    """
+        Downloads file from provided image_url and returns an in-memory file
+        with provided filename.
+    """
+
     headers = {"Accept":"image/*"}
-    response = requests.get(image_url, headers=headers)
+
+    try:
+        response = requests.get(image_url, headers=headers)
+    except requests.exceptions.MissingSchema:
+        # http://httpbin.org/image/jpeg
+        print(f'Problem with image url \'{image_url}\'. Did you forget to provide the URL?')
+        return ''
 
     if response.status_code == 200:
-        print(f'Image has been downloaded from {image_url}')
-        # return ContentFile(response.content)
+        
+        if response.headers.get('content-type', 'Not Specified')[:6] == 'image/':
+            print(f'Image has been downloaded from {image_url}')
 
-        temp_image = NamedTemporaryFile() #delete=True is default
-        temp_image.write(response.content)
-        temp_image.flush()
-        return File(temp_image,name=filename)
-
-        # try:
-        #     i = Image.open(BytesIO(response.content))
-        #     print(f'Image opened.')    
-        #     return i
-
-        # except:
-        #     print(f'Image could not be opened.')    
-        #     return ''
+            # see https://medium.com/@jainmickey/how-to-save-file-programmatically-to-django-37c67d9664b5
+            # for more information 
+            temp_image = NamedTemporaryFile() #delete=True is default
+            temp_image.write(response.content)
+            temp_image.flush()
+            return File(temp_image,name=filename)
+        
+        else:
+            print(f'Received non-image content type from {image_url}: {response.headers.get("content-type", "Not Specified")}.')
+            return ''
 
     else:
-        print(f'Image could not be downloaded from {image_url}')
+        print(f'Image could not be downloaded from {image_url}.\nStatus Code: {response.status_code}.')
         return ''

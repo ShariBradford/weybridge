@@ -6,11 +6,11 @@ import random
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.generic import DetailView
@@ -65,6 +65,7 @@ def user_profile(request,profiled_user_id):
     )
 
     location = profiled_user.profile.location or None
+    favorites = profiled_user.profile.favorites.all() or None
 
     # average_rating_old = (
     #     Rating.objects.filter(user=profiled_user)
@@ -88,8 +89,9 @@ def user_profile(request,profiled_user_id):
 
     context = {
         'user': request.user,
-        'profiled_user': profiled_user,
+        'profiled_user': profiled_user, # User object, not UserProfile
         'location': location,
+        'favorites': favorites,
         'user_average_rating' : average_rating,
         'all_ratings' : all_ratings,
         'all_questions_followed': all_questions_followed,
@@ -98,8 +100,18 @@ def user_profile(request,profiled_user_id):
     }
     return render(request, 'registration/user-profile.html', context)
 
+def can_edit_profile(user):
+    return True
+
+@login_required
+# @user_passes_test(can_edit_profile)
 def update_user_profile(request, profiled_user_id):
-    profiled_user = User.objects.get(id=profiled_user_id)
+    # only the user who owns the profile or a staff member may edit the profile
+    if request.user.id != profiled_user_id and not request.user.is_staff:
+        return render(request, 'shop/403.html')
+
+    # profiled_user = User.objects.get(id=profiled_user_id)
+    profiled_user = get_object_or_404(User, id=profiled_user_id)
     profile = profiled_user.profile
 
     if request.method == 'POST':
@@ -113,7 +125,10 @@ def update_user_profile(request, profiled_user_id):
             if form.cleaned_data['profile_pic'] == None or form.cleaned_data['profile_pic'] == False:
                 profile.profile_pic = UserProfile._meta.get_field('profile_pic').get_default()
 
-            request.session['django_timezone'] = form.cleaned_data['time_zone']
+            # if the edited profile is for the current user,
+            # update the session timezone variable
+            if request.user.id == profiled_user_id:
+                request.session['django_timezone'] = form.cleaned_data['time_zone']
 
             #save the profile and then save the many-to-many data from the form
             profile.save()
@@ -127,7 +142,7 @@ def update_user_profile(request, profiled_user_id):
 
             return redirect(f'/registration/{profiled_user_id}')
     
-    else: #this is a GET request so create a blank form
+    else: #this is a GET request so create an update form with profile data filled in
         form = UserProfileForm(instance=profile)
     
     context = {
@@ -148,11 +163,13 @@ def getTestData(request):
         user_data = json.load(data)
 
     # print('Users: ')
+    i = 0
     for user in user_data["results"]:
         # print(f'{user["name"]["first"]} {user["name"]["last"]}',end=' ')
         user['created'] = False
         user['user_id'] = None
-    
+        user['user-index'] = i
+        i += 1 
     # print()
     # print(user_data)
 
@@ -235,9 +252,9 @@ def create_users(request):
         new_user.last_name = user["name"]["last"]
         new_user.save()
 
-        new_user.profile.location = user["location"]["city"]
+        new_user.profile.location = user["location"]["city"] + ', ' + user["location"]["state"]
         new_user.profile.bio = "**TEST USER** Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ac fringilla ex. Integer in dictum justo, id ornare sapien. Phasellus id tempus odio. Vestibulum vitae ultrices tellus. Quisque id nisi nec tortor hendrerit suscipit. Pellentesque et viverra sapien, interdum iaculis ex. Quisque viverra lacus malesuada, maximus felis eu, mollis nisl. Nunc vel rutrum lorem. Morbi quis lobortis mauris, in lacinia justo. Mauris semper, magna eget mollis gravida, nisi felis mattis tortor, ut volutpat mi dui nec libero."
-        new_user.profile.birthday = parse_date(user["dob"]["date"]) #user["dob"]["date"][0:10]
+        new_user.profile.birthday = parse_date(user["dob"]["date"][:10]) #user["dob"]["date"][0:10]
         new_user.profile.save()
         print(f'Profile created for {user["name"]["first"]} {user["name"]["last"]}.')
 
@@ -251,7 +268,7 @@ def create_users(request):
                 new_user.profile.save()
                 print(f'Image saved.')
             except:
-                print(f'Image \'{filename}\' for user {user["name"]["first"]} {user["name"]["last"]} could not be saved.')
+                print(f'Image \'{filename}\' for user {user["name"]["first"]} {user["name"]["last"]} could not be saved to profile.')
                 pass
 
         user.update({
@@ -288,7 +305,7 @@ def create_users(request):
         print(f'Finished with {user["name"]["first"]} {user["name"]["last"]}.')
         
         i += 1
-        if i > 2:
+        if i >= 1: # 2:
             break 
 
     return redirect('accounts:test_data')   #('/testing')

@@ -65,5 +65,15 @@
             $('div.collection-info').html(htmlString);
         });
     });
+
+    (function () {
+        console.log('running iife');
+        var collection_info = $('.new-item form select[name="collection"]').val();
+        if (collection_info) {
+            console.log('Collection ' + collection_info);
+            $('.content').find('.new-item form select[name="collection"]').trigger('change');
+        }
+    })();
+
     </script>
 {% endblock additional_scripts %}

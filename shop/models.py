@@ -291,7 +291,7 @@ class ProductForm(ModelForm):
             'collection' : forms.Select(attrs={'class':'form-control'}),
             'inventory_stock' : forms.TextInput(attrs={'class':'form-control'}),
             'size_chart': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
-            'active' : forms.CheckboxInput(attrs={'class':'form-control'}),
+            'active' : forms.CheckboxInput(attrs={'class':'form-check-input'}),
        }
 
 class ProductFormWithImages(ProductForm):
@@ -625,16 +625,28 @@ class UserProfile(models.Model):
         """Returns True if we have favorited `product`; else False."""
         return self.favorites.filter(pk=product.pk).exists()
 
+    def get_user_fullname(self):
+        """Returns the full name of the User associated with the profile."""
+        return self.user.get_full_name()
+    get_user_fullname.short_description = 'Name'
+
+    def get_user_email(self):
+        """Returns the email address of the User associated with the profile."""
+        return self.user.email
+    get_user_email.short_description = 'Email'
+
 class UserProfileForm(ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['bio', 'location', 'birthday', 'profile_pic', 'time_zone']
+        fields = ['profile_pic', 'bio', 'location', 'birthday', 'time_zone','stripe_customer_id','one_click_purchasing',]
         widgets = {
             'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control-file','data-single-image': 'true',}),
             'bio': forms.Textarea(attrs={'class': 'form-control'}),
             'location' : forms.TextInput(attrs={'class':'form-control'}),
             'birth_date': forms.DateTimeInput(attrs={'class': 'form-control'}),
             'time_zone': forms.TextInput(attrs={'class':'form-control'}),
+            'stripe_customer_id': forms.TextInput(attrs={'class':'form-control'}),
+            'one_click_purchasing': forms.CheckboxInput(attrs={'class':'form-check-input'}),
        }
 
 class Contact(models.Model):
